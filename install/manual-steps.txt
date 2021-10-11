@@ -1,0 +1,30 @@
+vi /etc/apache2/mods-enabled/status.conf
+# Require ip 76.98.157.205
+
+vi /etc/apache2/mods-enabled/mpm_worker.conf
+
+	# we want to allow 10000 threads in total
+	# 10000 / 25 processes = 400
+	<IfModule mpm_worker_module>
+		ServerLimit 25
+		StartServers 2
+		MaxRequestWorkers 10000
+		MinSpareThreads 401
+		MaxSpareThreads 800
+		ThreadLimit 400
+		ThreadsPerChild 400
+		KeepAlive On
+		KeepAliveTimeout 1
+		MaxConnectionsPerChild 10000000
+	</IfModule>
+
+vi /etc/php/7.4/fpm/pool.d/www.conf
+# pm.max_children = 10
+# pm.max_requests = 100000
+
+
+# (as user transcodey)
+su transcodey
+
+crontab -e
+# * * * * * /home/transcodey/cron/redis-bw-cron.sh
