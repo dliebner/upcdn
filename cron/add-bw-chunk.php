@@ -11,26 +11,36 @@ $db = db();
 $redis = new Redis();
 $redis->pconnect('127.0.0.1');
 
-// Redis: Get and delete curent bandwidth chunk bytes value
-$ret = $redis->multi()
-	->get('bgcdn:bw_chunk')
-	->del('bgcdn:bw_chunk')
-	->exec();
+$start = time();
 
-if( $chunkBytes = (int)$ret[0] ) {
+// Run every second for 60 seconds
+set_time_limit(60 * 2);
+while( time() - 60 < $start ) {
 
-	// Add chunk bytes to running total
-	$sql = "INSERT INTO bandwidth_logs (`month`, bytes_out)
-	SELECT * FROM (
-		SELECT LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY as `month`, $chunkBytes as bytes_out
-	) as aux
-	ON DUPLICATE KEY UPDATE
-		bandwidth_logs.bytes_out = bandwidth_logs.bytes_out + aux.bytes_out";
+	// Redis: Get and delete curent bandwidth chunk bytes value
+	$ret = $redis->multi()
+		->get('bgcdn:bw_chunk')
+		->del('bgcdn:bw_chunk')
+		->exec();
 
-	if( !$db->sql_query($sql) ) {
+	if( $chunkBytes = (int)$ret[0] ) {
 
-		throw new QueryException("Error inserting", $sql);
+		// Add chunk bytes to running total
+		$sql = "INSERT INTO bandwidth_logs (`month`, bytes_out)
+		SELECT * FROM (
+			SELECT LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY as `month`, $chunkBytes as bytes_out
+		) as aux
+		ON DUPLICATE KEY UPDATE
+			bandwidth_logs.bytes_out = bandwidth_logs.bytes_out + aux.bytes_out";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error inserting", $sql);
+
+		}
 
 	}
+
+	sleep(1);
 
 }
