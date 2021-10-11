@@ -405,3 +405,143 @@ class QueryException extends Exception {
 	}
 	
 }
+
+class Config {
+	
+	protected static $data;
+	
+	protected static function loadConfig() {
+
+		$db = db();
+		
+		$sql = "SELECT `property`, `value` FROM config";
+		
+		if( !$result = $db->sql_query($sql) ) {
+			
+			throw new QueryException('Could not select from config', $sql);
+			
+		}
+		
+		self::$data = array();
+		while( $row = $db->sql_fetchrow($result) ) {
+			
+			self::$data[$row['property']] = $row['value'];
+			
+		}
+		
+	}
+	
+	public static function get($property, $forceRefresh = false) {
+		
+		if( $forceRefresh || !isset(self::$data) ) {
+			
+			self::loadConfig();
+			
+		}
+		
+		if( !isset(self::$data[$property]) ) {
+			
+			throw new Exception('Config: Tried to get nonexistant property: ' . $property);
+			
+		}
+		
+		return self::$data[$property];
+		
+	}
+	
+	public static function set($property, $value) {
+		
+		$db = db();
+		
+		if( !isset(self::$data) ) {
+			
+			self::loadConfig();
+			
+		}
+		
+		self::$data[$property] = $value;
+		
+		$sql = "INSERT INTO config (`property`, `value`) VALUES
+			('" . original_to_query($property) . "', '" . original_to_query($value) . "')
+			ON DUPLICATE KEY UPDATE
+				`value` = VALUES(`value`)";
+		
+		if( !$db->sql_query($sql) ) {
+			
+			throw new QueryException('Error insert/updating into config', $sql);
+			
+		}
+		
+	}
+	
+}
+
+class ServerStatus {
+	
+	protected static $data;
+	
+	protected static function loadAll() {
+
+		$db = db();
+		
+		$sql = "SELECT `property`, `value` FROM server_status";
+		
+		if( !$result = $db->sql_query($sql) ) {
+			
+			throw new QueryException('Could not select from server_status', $sql);
+			
+		}
+		
+		self::$data = array();
+		while( $row = $db->sql_fetchrow($result) ) {
+			
+			self::$data[$row['property']] = json_decode($row['value'], true);
+			
+		}
+		
+	}
+	
+	public static function get($property, $forceRefresh = false) {
+		
+		if( $forceRefresh || !isset(self::$data) ) {
+			
+			self::loadAll();
+			
+		}
+		
+		if( !isset(self::$data[$property]) ) {
+			
+			throw new Exception('ServerStatus: Tried to get nonexistant property: ' . $property);
+			
+		}
+		
+		return self::$data[$property];
+		
+	}
+	
+	public static function set($property, $value) {
+		
+		$db = db();
+		
+		if( !isset(self::$data) ) {
+			
+			self::loadAll();
+			
+		}
+		
+		self::$data[$property] = $value;
+		
+		$sql = "INSERT INTO server_status (`property`, `value`) VALUES
+			('" . original_to_query($property) . "', '" . original_to_query(json_encode($value)) . "')
+			ON DUPLICATE KEY UPDATE
+				`value` = VALUES(`value`)";
+		
+		if( !$db->sql_query($sql) ) {
+			
+			throw new QueryException('Error insert/updating into server_status', $sql);
+			
+		}
+		
+	}
+	
+}
