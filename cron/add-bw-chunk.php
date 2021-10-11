@@ -4,6 +4,8 @@ define('IN_SCRIPT', 1);
 
 $root_path = '../';
 
+require($root_path . 'common.php');
+
 $db = db();
 
 $redis = new Redis();
