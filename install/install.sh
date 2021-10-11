@@ -8,6 +8,7 @@ echo "<?php\
 # chmod files
 chmod +x install-composer.sh
 chmod +x ../scripts/*
+chmod +x ../cron/*.sh
 
 # general dependencies
 sudo apt update
