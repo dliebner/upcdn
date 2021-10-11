@@ -3,6 +3,8 @@
 # init local files
 mkdir -p ../local
 echo "<?php\
+\
+if( !defined('IN_SCRIPT') ) die( \"Hacking attempt\" );\
 " > ../local/constants.php
 
 # chmod files
@@ -47,7 +49,8 @@ CREATE USER '${MYSQL_BGCDN_USER}'@'localhost' IDENTIFIED WITH mysql_native_passw
 GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_BGCDN_USER}'@'localhost';\
 FLUSH PRIVILEGES;"
 echo "\
-define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');" >> ../local/constants.php
+define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');\
+" >> ../local/constants.php
 unset MYSQL_BGCDN_PW
 echo
 sudo service mysql restart
