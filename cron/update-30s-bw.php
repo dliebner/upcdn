@@ -17,7 +17,8 @@ while( time() - 60 < $start ) {
 
 	$bw30s = (int)$redis->get('bgcdn:bw_30sec_exp_' . (time() + 1));
 
-	ServerStatus::set('avg_bytes_per_sec_30s', round($bw30s / 8 / 30) );
+	ServerStatus::set('avg_bytes_per_sec_30s', round($bw30s / 30) );
+	ServerStatus::set('port_saturation', round($bw30s * 8 / 30 / Config::get('port_speed_bps'), 4) );
 
 	sleep(1);
 
