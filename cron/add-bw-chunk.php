@@ -22,7 +22,7 @@ $chunkBytes = (int)$ret[0];
 // Add chunk bytes to running total
 $sql = "INSERT INTO bandwidth_logs (`month`, bytes_out)
 SELECT * FROM (
-    SELECT LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY as `month`, 99 as bytes_out
+    SELECT LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY as `month`, $chunkBytes as bytes_out
 ) as aux
 ON DUPLICATE KEY UPDATE
 	bandwidth_logs.bytes_out = bandwidth_logs.bytes_out + aux.bytes_out";
