@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '../';
+$root_path = '/home/bgcdn/';
 
 require($root_path . 'common.php');
 
