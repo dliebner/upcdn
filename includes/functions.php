@@ -462,9 +462,9 @@ class Config {
 		self::$data[$property] = $value;
 		
 		$sql = "INSERT INTO config (`property`, `value`) VALUES
-			('" . original_to_query($property) . "', '" . original_to_query($value) . "')
+			('" . original_to_query($property) . "', '" . original_to_query($value) . "') as aux
 			ON DUPLICATE KEY UPDATE
-				`value` = VALUES(`value`)";
+				`value` = aux.value";
 		
 		if( !$db->sql_query($sql) ) {
 			
@@ -532,9 +532,9 @@ class ServerStatus {
 		self::$data[$property] = $value;
 		
 		$sql = "INSERT INTO server_status (`property`, `value`) VALUES
-			('" . original_to_query($property) . "', '" . original_to_query(json_encode($value)) . "')
+			('" . original_to_query($property) . "', '" . original_to_query(json_encode($value)) . "') as aux
 			ON DUPLICATE KEY UPDATE
-				`value` = VALUES(`value`)";
+				`value` = aux.value";
 		
 		if( !$db->sql_query($sql) ) {
 			
