@@ -13,3 +13,4 @@ require_once( $root_path. 'vendor/autoload.php' );
 require_once( $root_path. 'local/constants.php' );
 require_once( $root_path. 'includes/functions.php' );
 require_once( $root_path. 'includes/db.php' );
+require_once( $root_path. 'includes/CDNTools.php' );
