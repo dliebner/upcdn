@@ -410,36 +410,36 @@ class Config {
 	
 	protected static $data;
 	
-	protected static function loadConfig() {
+	protected static function loadConfig($forceRefresh = false) {
+		
+		if( $forceRefresh || !isset(self::$data) ) {
 
-		$db = db();
-		
-		$sql = "SELECT `property`, `value` FROM config";
-		
-		if( !$result = $db->sql_query($sql) ) {
+			$db = db();
 			
-			throw new QueryException('Could not select from config', $sql);
+			$sql = "SELECT `property`, `value` FROM config";
 			
-		}
-		
-		self::$data = array();
-		while( $row = $db->sql_fetchrow($result) ) {
+			if( !$result = $db->sql_query($sql) ) {
+				
+				throw new QueryException('Could not select from config', $sql);
+				
+			}
 			
-			self::$data[$row['property']] = $row['value'];
-			
+			self::$data = array();
+			while( $row = $db->sql_fetchrow($result) ) {
+				
+				self::$data[$row['property']] = $row['value'];
+				
+			}
+
 		}
 		
 	}
 	
-	public static function get($property, $forceRefresh = false) {
+	public static function get($property) {
 		
-		if( $forceRefresh || !isset(self::$data) ) {
-			
-			self::loadConfig();
-			
-		}
+		self::loadConfig();
 		
-		if( !isset(self::$data[$property]) ) {
+		if( !self::is_set($property) ) {
 			
 			throw new Exception('Config: Tried to get nonexistant property: ' . $property);
 			
@@ -449,15 +449,17 @@ class Config {
 		
 	}
 	
+	public static function is_set($property) {
+
+		self::loadConfig();
+		
+		return isset(self::$data) && isset(self::$data[$property]);
+		
+	}
+	
 	public static function set($property, $value) {
 		
-		$db = db();
-		
-		if( !isset(self::$data) ) {
-			
-			self::loadConfig();
-			
-		}
+		self::loadConfig();
 		
 		self::$data[$property] = $value;
 		
@@ -466,9 +468,26 @@ class Config {
 			ON DUPLICATE KEY UPDATE
 				`value` = aux.value";
 		
-		if( !$db->sql_query($sql) ) {
+		if( !db()->sql_query($sql) ) {
 			
 			throw new QueryException('Error insert/updating into config', $sql);
+			
+		}
+		
+	}
+	
+	public static function delete($property) {
+		
+		self::loadConfig();
+		
+		if( self::is_set($property) ) unset(self::$data[$property]);
+		
+		$sql = "DELETE FROM config
+			WHERE `property` = '" . original_to_query($property) . "'";
+		
+		if( !db()->sql_query($sql) ) {
+			
+			throw new QueryException('Error deleting from config', $sql);
 			
 		}
 		

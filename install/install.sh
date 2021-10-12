@@ -102,6 +102,9 @@ sudo useradd -m -s /bin/bash bgcdn
 # install composer
 ./install-composer.sh
 
+# install composer extensions
+composer require gabrielelana/byte-units
+
 # copy files
 cp bgcdn.conf /etc/apache2/sites-available/
 
