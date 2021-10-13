@@ -87,6 +87,50 @@ class CDNTools {
 
 	}
 
+	public static function getMonthlyBandwidthUsedBytes() {
+
+		$db = db();
+
+		$sql = "SELECT bytes_out
+			FROM bandwidth_logs
+			WHERE month = LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY";
+
+		if( !$result = $db->sql_query($sql) ) {
+
+			throw new QueryException("Error selecting", $sql);
+
+		}
+
+		return (int)$db->sql_fetchrow($result)['bytes_out'];
+
+	}
+
+	public static function getMonthlyBandwidthUsedPct() {
+
+		$monthlyBandwidthAlloc = Config::get('monthly_bandwidth_alloc');
+		$monthlyBandwidthAllocBytes = (int)str_replace('B', '', ByteUnits\parse($monthlyBandwidthAlloc)->format('B'));
+
+		return self::getMonthlyBandwidthUsedBytes() / $monthlyBandwidthAllocBytes;
+
+	}
+
+	public static function getPctMonthPassed() {
+
+		$firstOfTheMonth = (new DateTime('today'))->modify('first day of this month');
+		$firstOfNextMonth = (new DateTime('today'))->modify('first day of next month');
+		$fotmTs = $firstOfTheMonth->getTimestamp();
+		$pctMonthPassed = (time() - $fotmTs) / ($firstOfNextMonth->getTimestamp() - $fotmTs);
+
+		return $pctMonthPassed;
+
+	}
+
+	public static function getProjectedMonthlyBandwidthUsedPct() {
+
+		return self::getMonthlyBandwidthUsedPct() / self::getPctMonthPassed();
+
+	}
+
 	protected static function curlPost($url, $params = array()) {
 		
 		//open connection

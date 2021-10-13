@@ -41,6 +41,11 @@ while( time() - 60 < $start ) {
 
 	}
 
+	ServerStatus::setMulti([
+		'monthly_bandwidth_used' => round(CDNTools::getMonthlyBandwidthUsedPct(), 4),
+		'projected_monthly_bandwidth_used' => round(CDNTools::getProjectedMonthlyBandwidthUsedPct(), 4),
+	]);
+
 	sleep(1);
 
 }
