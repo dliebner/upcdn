@@ -216,10 +216,10 @@ class CpuPercentCalculator {
 			if( $statData1 && $statData2 ) {
 
 				// Get difference
-				$diff0 = $statData2[0] -= $statData1[0];
-				$diff1 = $statData2[1] -= $statData1[1];
-				$diff2 = $statData2[2] -= $statData1[2];
-				$diff3 = $statData2[3] -= $statData1[3];
+				$diff0 = $statData2[0] - $statData1[0];
+				$diff1 = $statData2[1] - $statData1[1];
+				$diff2 = $statData2[2] - $statData1[2];
+				$diff3 = $statData2[3] - $statData1[3];
 
 				// Sum up the 4 values for User, Nice, System and Idle and calculate
 				// the percentage of idle time (which is part of the 4 values!)
