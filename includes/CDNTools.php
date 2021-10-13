@@ -168,7 +168,10 @@ class CDNTools {
 
 class CpuPercentCalculator {
 
-	protected static function getServerLoadLinuxData() {
+	protected $statData1;
+	protected $statData2;
+
+	protected function getServerLoadLinuxData() {
 
 		$cpuVals = null;
 
@@ -198,15 +201,17 @@ class CpuPercentCalculator {
 	}
 
 	// Returns server load in percent (just number, without percent sign)
-	function getCpuPercent() {
+	public function getCpuPercent($sleep = 1) {
 
 		if( is_readable('/proc/stat') ) {
 
 			// Collect 2 samples - each with 1 second period
 			// See: https://de.wikipedia.org/wiki/Load#Der_Load_Average_auf_Unix-Systemen
-			$statData1 = self::getServerLoadLinuxData();
-			sleep(1);
-			$statData2 = self::getServerLoadLinuxData();
+			if( !$this->statData1 ) $statData1 = $this->statData1 = $this->getServerLoadLinuxData();
+
+			sleep($sleep);
+
+			$statData2 = $this->statData2 = $this->getServerLoadLinuxData();
 
 			if( $statData1 && $statData2 ) {
 
@@ -221,7 +226,12 @@ class CpuPercentCalculator {
 				$cpuTime = $statData2[0] + $statData2[1] + $statData2[2] + $statData2[3];
 
 				// Invert percentage to get CPU time, not idle time
-				return 1 - ($statData2[3] / $cpuTime);
+				$pctCpu = 1 - ($statData2[3] / $cpuTime);
+
+				// Move $statData2 => $statData1
+				$this->statData1 = $statData2;
+
+				return $pctCpu;
 
 			}
 

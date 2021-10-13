@@ -13,6 +13,8 @@ $redis->pconnect('127.0.0.1');
 
 $start = time();
 
+$cpuPctCalc = new CpuPercentCalculator();
+
 // Run every second for 60 seconds
 set_time_limit(60 * 2);
 while( time() - 60 < $start ) {
@@ -44,8 +46,10 @@ while( time() - 60 < $start ) {
 	ServerStatus::setMulti([
 		'monthly_bandwidth_used_pct' => round(CDNTools::getMonthlyBandwidthUsedPct(), 4),
 		'projected_monthly_bandwidth_used_pct' => round(CDNTools::getProjectedMonthlyBandwidthUsedPct(), 4),
+		'cpu_usage_pct' => round($cpuPctCalc->getCpuPercent(1), 4)
 	]);
 
-	sleep(1);
+	// getCpuPercent() sleeps 1
+	// sleep(1);
 
 }
