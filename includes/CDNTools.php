@@ -175,7 +175,7 @@ class CpuPercentCalculator {
 
 		$cpuVals = null;
 
-		if( $handle = fopen("/proc/stat", "r") ) {
+		if( $handle = fopen('/proc/stat', 'r') ) {
 
 			while( ($line = fgets($handle)) !== false ) {
 
@@ -201,7 +201,7 @@ class CpuPercentCalculator {
 	}
 
 	// Returns server load in percent (just number, without percent sign)
-	public function getCpuPercent($sleep = 1) {
+	public function getCpuPercent($sleep = 1, $reuse = false) {
 
 		if( is_readable('/proc/stat') ) {
 
@@ -216,20 +216,28 @@ class CpuPercentCalculator {
 			if( $statData1 && $statData2 ) {
 
 				// Get difference
-				$statData2[0] -= $statData1[0];
-				$statData2[1] -= $statData1[1];
-				$statData2[2] -= $statData1[2];
-				$statData2[3] -= $statData1[3];
+				$diff0 = $statData2[0] -= $statData1[0];
+				$diff1 = $statData2[1] -= $statData1[1];
+				$diff2 = $statData2[2] -= $statData1[2];
+				$diff3 = $statData2[3] -= $statData1[3];
 
 				// Sum up the 4 values for User, Nice, System and Idle and calculate
 				// the percentage of idle time (which is part of the 4 values!)
-				$cpuTime = $statData2[0] + $statData2[1] + $statData2[2] + $statData2[3];
+				$cpuTime = $diff0 + $diff1 + $diff2 + $diff3;
 
 				// Invert percentage to get CPU time, not idle time
-				$pctCpu = 1 - ($statData2[3] / $cpuTime);
+				$pctCpu = 1 - ($diff3 / $cpuTime);
 
-				// Move $statData2 => $statData1
-				$this->statData1 = $statData2;
+				if( $reuse ) {
+					
+					// Move $statData2 => $statData1
+					$this->statData1 = $statData2;
+
+				} else {
+
+					unset($this->statData1);
+
+				}
 
 				return $pctCpu;
 
