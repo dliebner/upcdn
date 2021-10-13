@@ -40,9 +40,14 @@ sudo apt install apache2 php7.4 php-cli php-dev libapache2-mod-fcgid php-fpm hto
 # secure MySQL installation
 sudo mysql_secure_installation
 
+# Collect installation details
+read -sp "CDN server hostname: " BGCDN_HOSTNAME
+echo
+
 # add bgcdn mysql user
 MYSQL_BGCDN_USER="bgcdn_user"
 read -sp "Set MYSQL_BGCDN_USER password: " MYSQL_BGCDN_PW
+echo
 printf -v MYSQL_BGCDN_PW "%q" "$MYSQL_BGCDN_PW" # escape the password
 sudo mysql --execute="USE mysql;\
 CREATE USER '${MYSQL_BGCDN_USER}'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_BGCDN_PW}';\
@@ -52,7 +57,6 @@ echo "\
 define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');\
 " >> ../local/constants.php
 unset MYSQL_BGCDN_PW
-echo
 sudo service mysql restart
 
 sudo ufw allow 'Apache Full'
@@ -106,7 +110,15 @@ sudo useradd -m -s /bin/bash bgcdn
 composer require gabrielelana/byte-units
 
 # copy files
-cp bgcdn.conf /etc/apache2/sites-available/
+sudo cp bgcdn.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
+
+# replace occurences of BGCDN_HOSTNAME in conf files
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+
+# soft link
+sudo ln -rs /etc/apache2/sites-available/${BGCDN_HOSTNAME}* /etc/apache2/sites-enabled/
+sudo ln -rs /etc/apache2/conf-available/bgcdn* /etc/apache2/conf-enabled/
 
 # chown files
 chown -R bgcdn:bgcdn /home/bgcdn/

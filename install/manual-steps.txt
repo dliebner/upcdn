@@ -28,3 +28,6 @@ su transcodey
 
 crontab -e
 # * * * * * /home/transcodey/cron/redis-bw-cron.sh
+
+# run certbot
+certbot --apache
