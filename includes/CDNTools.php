@@ -165,3 +165,68 @@ class CDNTools {
 	}
 	
 }
+
+class CpuPercentCalculator {
+
+	protected static function getServerLoadLinuxData() {
+
+		$cpuVals = null;
+
+		if( $handle = fopen("/proc/stat", "r") ) {
+
+			while( ($line = fgets($handle)) !== false ) {
+
+				// process the line read.
+				if( ($trimLine = preg_replace('/^cpu\s+/i', '', $line, -1, $count)) && $count ) {
+
+					// Total CPU, i.e.
+					// cpu  1310702 610184 429957 435005796 24705 0 119391 0 0 0
+					$cpuVals = preg_split('/\s+/', $trimLine, 5);
+					array_pop($cpuVals);
+
+					break;
+
+				}
+
+			}
+			fclose($handle);
+
+		}
+
+		return $cpuVals;
+
+	}
+
+	// Returns server load in percent (just number, without percent sign)
+	function getCpuPercent() {
+
+		if( is_readable('/proc/stat') ) {
+
+			// Collect 2 samples - each with 1 second period
+			// See: https://de.wikipedia.org/wiki/Load#Der_Load_Average_auf_Unix-Systemen
+			$statData1 = self::getServerLoadLinuxData();
+			sleep(1);
+			$statData2 = self::getServerLoadLinuxData();
+
+			if( $statData1 && $statData2 ) {
+
+				// Get difference
+				$statData2[0] -= $statData1[0];
+				$statData2[1] -= $statData1[1];
+				$statData2[2] -= $statData1[2];
+				$statData2[3] -= $statData1[3];
+
+				// Sum up the 4 values for User, Nice, System and Idle and calculate
+				// the percentage of idle time (which is part of the 4 values!)
+				$cpuTime = $statData2[0] + $statData2[1] + $statData2[2] + $statData2[3];
+
+				// Invert percentage to get CPU time, not idle time
+				return 1 - ($statData2[3] / $cpuTime);
+
+			}
+
+		}
+
+	}
+
+}
