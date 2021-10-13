@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Note: This script should be replaced by a C++ program for increased performance
+
 # CustomLog "|/home/transcodey/redis-pipe.sh" "%{end:sec}t %O"
 
 while read logline; do
