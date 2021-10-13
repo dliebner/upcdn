@@ -19,7 +19,7 @@ while( time() - 60 < $start ) {
 
 	ServerStatus::setMulti([
 		'avg_bytes_per_sec_30s' => round($bytes30s / 30),
-		'port_saturation' => round($bytes30s * 8 / 30 / CDNTools::getPortSpeedBits(), 4),
+		'port_saturation_pct' => round($bytes30s * 8 / 30 / CDNTools::getPortSpeedBits(), 4),
 	]);
 
 	sleep(1);
