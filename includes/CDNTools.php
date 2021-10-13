@@ -207,11 +207,11 @@ class CpuPercentCalculator {
 
 			// Collect 2 samples - each with 1 second period
 			// See: https://de.wikipedia.org/wiki/Load#Der_Load_Average_auf_Unix-Systemen
-			if( !$this->statData1 ) $statData1 = $this->statData1 = $this->getServerLoadLinuxData();
+			if( !$this->statData1 ) $this->statData1 = $statData1 = $this->getServerLoadLinuxData();
 
 			sleep($sleep);
 
-			$statData2 = $this->statData2 = $this->getServerLoadLinuxData();
+			$this->statData2 = $statData2 = $this->getServerLoadLinuxData();
 
 			if( $statData1 && $statData2 ) {
 
