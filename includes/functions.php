@@ -459,12 +459,24 @@ class Config {
 	
 	public static function set($property, $value) {
 		
-		self::loadConfig();
+		self::setMulti([$property => $value]);
 		
-		self::$data[$property] = $value;
+	}
+	
+	public static function setMulti(array $keyValueObject) {
+		
+		self::loadConfig();
+
+		$inserts = [];
+		foreach( $keyValueObject as $property => $value ) {
+
+			self::$data[$property] = $value;
+			$inserts[] = "('" . original_to_query($property) . "', '" . original_to_query($value) . "')";
+
+		}
 		
 		$sql = "INSERT INTO config (`property`, `value`) VALUES
-			('" . original_to_query($property) . "', '" . original_to_query($value) . "') as aux
+			" . implode(", ", $inserts) . " as aux
 			ON DUPLICATE KEY UPDATE
 				`value` = aux.value";
 		
@@ -540,22 +552,32 @@ class ServerStatus {
 	
 	public static function set($property, $value) {
 		
-		$db = db();
+		self::setMulti([$property => $value]);
+		
+	}
+	
+	public static function setMulti(array $keyValueObject) {
 		
 		if( !isset(self::$data) ) {
 			
 			self::loadAll();
 			
 		}
-		
-		self::$data[$property] = $value;
+
+		$inserts = [];
+		foreach( $keyValueObject as $property => $value ) {
+
+			self::$data[$property] = $value;
+			$inserts[] = "('" . original_to_query($property) . "', '" . original_to_query(json_encode($value)) . "')";
+
+		}
 		
 		$sql = "INSERT INTO server_status (`property`, `value`) VALUES
-			('" . original_to_query($property) . "', '" . original_to_query(json_encode($value)) . "') as aux
+			" . implode(", ", $inserts) . " as aux
 			ON DUPLICATE KEY UPDATE
 				`value` = aux.value";
 		
-		if( !$db->sql_query($sql) ) {
+		if( !db()->sql_query($sql) ) {
 			
 			throw new QueryException('Error insert/updating into server_status', $sql);
 			
