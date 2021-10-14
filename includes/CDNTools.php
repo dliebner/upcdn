@@ -122,7 +122,7 @@ class CDNTools {
 
 	public static function getPortSpeedBits() {
 
-		$portSpeedTxt = strtolower(Config::get('port_speed'));
+		$portSpeedTxt = strtolower(Config::get('port_speed', true));
 
 		//				 1		 2		  3
 		$pattern = '/^\s*(\d+)\s*([KMGT])?(bit|bps)?\s*$/i';
@@ -170,7 +170,7 @@ class CDNTools {
 
 	public static function getMonthlyBandwidthUsedPct() {
 
-		$monthlyBandwidthAlloc = Config::get('monthly_bandwidth_alloc');
+		$monthlyBandwidthAlloc = Config::get('monthly_bandwidth_alloc', true);
 		$monthlyBandwidthAllocBytes = (int)str_replace('B', '', ByteUnits\parse($monthlyBandwidthAlloc)->format('B'));
 
 		return self::getMonthlyBandwidthUsedBytes() / $monthlyBandwidthAllocBytes;

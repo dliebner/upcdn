@@ -478,11 +478,11 @@ class Config {
 
 	}
 	
-	public static function get($property) {
+	public static function get($property, $require = false) {
 		
 		self::loadConfig();
 		
-		if( !self::is_set($property) ) {
+		if( $require && !self::is_set($property) ) {
 			
 			throw new Exception('Config: Tried to get nonexistant property: ' . $property);
 			
