@@ -45,7 +45,7 @@ while( time() - 60 < $start ) {
 
 	ServerStatus::setMulti([
 		'monthly_bandwidth_used_pct' => round(CDNTools::getMonthlyBandwidthUsedPct(), 4),
-		'projected_monthly_bandwidth_used_pct' => round(CDNTools::getProjectedMonthlyBandwidthUsedPct(), 4),
+		'projected_monthly_bandwidth_fill' => round(CDNTools::getProjectedMonthlyBandwidthUsedPct(), 4),
 		'cpu_usage_pct' => round($cpuPctCalc->getCpuPercent(1, true), 4)
 	]);
 
