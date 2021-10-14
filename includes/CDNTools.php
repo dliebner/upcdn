@@ -2,15 +2,25 @@
 
 if( !defined('IN_SCRIPT') ) die( "Hacking attempt" );
 
-class CDNTools {
+class CDNClient {
+
+	const HUB_ACTION_VALIDATE_KEY = 'validateKey';
+	const HUB_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
+
+	const CLIENT_ACTION_INIT_SERVER = 'initServer';
+	const CLIENT_ACTION_VALIDATE_KEY = 'validateKey';
 
 	public static function postToHub( $action, $params = array(), $options = array() ) {
 
 		global $root_path;
 
-		if( !Config::is_set('hub_api_url') ) throw new Exception('Hub API URL is not set.');
-		if( !Config::is_set('server_id') ) throw new Exception('Server ID is not set.');
-		if( !Config::is_set('secret_key') ) throw new Exception('Secret key is not set.');
+		$serverId = Config::get('server_id') ?: $options['serverId'];
+		$secretKey = Config::get('secret_key') ?: $options['secretKey'];
+		$hubApiUrl = Config::get('hub_api_url') ?: $options['hubApiUrl'];
+
+		if( !$serverId ) throw new Exception('Server ID is not set.');
+		if( !$secretKey ) throw new Exception('Secret key is not set.');
+		if( !$hubApiUrl ) throw new Exception('Hub API URL is not set.');
 
 		require_once($root_path. 'includes/JSONEncrypt.php');
 		
@@ -19,11 +29,11 @@ class CDNTools {
 		if( is_array($params) && count($params) > 0 ) $parcel['params'] = $params;
 		
 		$curlParams = array(
-			'id' => Config::get('server_id'),
-			'parcel' => JSONEncrypt::encode($parcel, Config::get('secret_key'))
+			'id' => $serverId,
+			'parcel' => JSONEncrypt::encode($parcel, $secretKey)
 		);
 		
-		if( !$response = self::curlPost(Config::get('hub_api_url'), $curlParams) ) {
+		if( !$response = self::curlPost($hubApiUrl, $curlParams) ) {
 			
 			throw new Exception('Error when posting to the hub server: no response');
 			
@@ -56,6 +66,59 @@ class CDNTools {
 		}
 		
 	}
+
+	public static function syncClientServerStatus() {
+
+		self::postToHub(self::HUB_ACTION_SYNC_CLIENT_DATA, [
+			'clientServerStatus' => ServerStatus::getAll(),
+		]);
+
+	}
+
+	public static function syncClientServerConfig() {
+
+		self::postToHub(self::HUB_ACTION_SYNC_CLIENT_DATA, [
+			'clientServerConfig' => Config::getAll(),
+		]);
+
+	}
+
+	protected static function curlPost($url, $params = array()) {
+		
+		//open connection
+		$ch = curl_init();
+		
+		//set the url, number of POST vars, POST data
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		
+		// set the connect timeout
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+		
+		if( count($params) > 0 ) {
+			
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+			
+		}
+		
+		//execute post
+		$response = curl_exec($ch);
+		
+		if( $err = curl_error($ch) ) throw new Exception('cURL error: ' . $err);
+		
+		//close connection
+		curl_close($ch);
+		
+		return $response;
+		
+	}
+
+}
+
+class CDNTools {
 
 	public static function getPortSpeedBits() {
 
@@ -129,39 +192,6 @@ class CDNTools {
 
 		return self::getMonthlyBandwidthUsedPct() / self::getPctMonthPassed();
 
-	}
-
-	protected static function curlPost($url, $params = array()) {
-		
-		//open connection
-		$ch = curl_init();
-		
-		//set the url, number of POST vars, POST data
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		
-		// set the connect timeout
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-		
-		if( count($params) > 0 ) {
-			
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-			
-		}
-		
-		//execute post
-		$response = curl_exec($ch);
-		
-		if( $err = curl_error($ch) ) throw new Exception('cURL error: ' . $err);
-		
-		//close connection
-		curl_close($ch);
-		
-		return $response;
-		
 	}
 	
 }

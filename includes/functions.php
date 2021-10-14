@@ -406,6 +406,41 @@ class QueryException extends Exception {
 	
 }
 
+class AjaxResponse {
+	
+	public static function status($code, $message = null, $data = array() ) {
+		
+		$response = array(
+			'status' => $code
+		);
+		
+		if( $message ) $response['message'] = $message;
+		if( $data ) $response['data'] = $data;
+		
+		return json_encode($response);
+		
+	}
+	
+	public static function returnSuccess( $data = array() ) {
+		
+		die( self::status('success', null, $data) );
+		
+	}
+	
+	public static function returnError( $message, $data = array() ) {
+		
+		die( self::status('error', $message, $data) );
+		
+	}
+	
+	public static function criticalDie( $message, $data = array() ) {
+		
+		die( self::status('critical', $message, $data) );
+		
+	}
+	
+}
+
 class Config {
 	
 	protected static $data;
@@ -433,6 +468,14 @@ class Config {
 
 		}
 		
+	}
+
+	public static function getAll() {
+
+		self::loadConfig();
+
+		return self::$data;
+
 	}
 	
 	public static function get($property) {
@@ -511,34 +554,42 @@ class ServerStatus {
 	
 	protected static $data;
 	
-	protected static function loadAll() {
+	protected static function loadAll($forceRefresh = false) {
 
 		$db = db();
 		
-		$sql = "SELECT `property`, `value` FROM server_status";
+		if( $forceRefresh || !isset(self::$data) ) {
 		
-		if( !$result = $db->sql_query($sql) ) {
+			$sql = "SELECT `property`, `value` FROM server_status";
 			
-			throw new QueryException('Could not select from server_status', $sql);
+			if( !$result = $db->sql_query($sql) ) {
+				
+				throw new QueryException('Could not select from server_status', $sql);
+				
+			}
 			
-		}
-		
-		self::$data = array();
-		while( $row = $db->sql_fetchrow($result) ) {
-			
-			self::$data[$row['property']] = json_decode($row['value'], true);
-			
+			self::$data = array();
+			while( $row = $db->sql_fetchrow($result) ) {
+				
+				self::$data[$row['property']] = json_decode($row['value'], true);
+				
+			}
+
 		}
 		
 	}
+
+	public static function getAll() {
+
+		self::loadAll();
+
+		return self::$data;
+
+	}
 	
-	public static function get($property, $forceRefresh = false) {
-		
-		if( $forceRefresh || !isset(self::$data) ) {
-			
-			self::loadAll();
-			
-		}
+	public static function get($property) {
+
+		self::loadAll();
 		
 		if( !isset(self::$data[$property]) ) {
 			
@@ -557,12 +608,8 @@ class ServerStatus {
 	}
 	
 	public static function setMulti(array $keyValueObject) {
-		
-		if( !isset(self::$data) ) {
-			
-			self::loadAll();
-			
-		}
+
+		self::loadAll();
 
 		$inserts = [];
 		foreach( $keyValueObject as $property => $value ) {

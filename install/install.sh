@@ -108,6 +108,7 @@ sudo useradd -m -s /bin/bash bgcdn
 
 # install composer extensions
 composer require gabrielelana/byte-units
+composer require guzzlehttp/guzzle:^6.3.0
 
 # copy files
 sudo cp bgcdn.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
