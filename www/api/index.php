@@ -53,15 +53,16 @@ if( !$secretKey ) {
 
 		$success = false;
 
-		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_KEY, [
+		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_KEY, [], [
 			'serverId' => $newServerId,
 			'secretKey' => $newSecretKey,
-			'hubApiUrl' => $newHubApiUrl
-		],['success' => function() use (&$success) {
+			'hubApiUrl' => $newHubApiUrl,
+			'success' => function() use (&$success) {
 
-			$success = true;
+				$success = true;
 
-		}]);
+			}
+		]);
 
 		if( $success ) {
 
