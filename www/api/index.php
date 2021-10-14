@@ -24,6 +24,13 @@ if( !$secretKey ) {
 	// Allow init only
 	if( $payload->action == CDNClient::CLIENT_ACTION_INIT_SERVER ) {
 
+		// Require HTTPS
+		if( $_SERVER['HTTPS'] !== 'on' ) {
+	
+			AjaxResponse::criticalDie("Attempted to init insecurely. Choose a new secretKey and try again over HTTPS.");
+	
+		}
+
 		$newConfig = (array)$params->updateConfig;
 
 		if( !$newSecretKey = $newConfig['secret_key'] ) {
