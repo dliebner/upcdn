@@ -21,3 +21,5 @@ CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_KEY, [], [
 
 	}
 ]);
+
+echo "\n";
