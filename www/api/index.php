@@ -92,6 +92,14 @@ switch( $payload->action ) {
 
 		break;
 
+	case CDNClient::CLIENT_ACTION_SYNC_CLIENT_DATA:
+
+		AjaxResponse::returnSuccess([
+			'clientServerStatus' => ServerStatus::getAll(),
+		]);
+
+		break;
+
 	default:
 
 		AjaxResponse::criticalDie('Invalid action: ' . $payload->action);
