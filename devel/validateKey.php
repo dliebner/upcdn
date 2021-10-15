@@ -6,6 +6,8 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
+error_reporting(E_ALL);
+
 CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_KEY, [], [
 	'success' => function() {
 
