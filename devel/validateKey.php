@@ -11,5 +11,11 @@ CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_KEY, [], [
 
 		echo "Secret key validated.";
 
+	}, 'error' => function($message, $data) {
+
+		echo "Validation error: " . $message . "\n\n";
+
+		print_r($data);
+
 	}
 ]);
