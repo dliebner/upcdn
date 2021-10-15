@@ -1,8 +1,10 @@
 <?php
 
+define('IN_SCRIPT', 1);
+
 $root_path = './../';
 
-require_once( $root_path. 'vendor/autoload.php' );
+require_once( $root_path. 'common.php' );
 
 use obregonco\B2\Client;
 use obregonco\B2\Bucket;

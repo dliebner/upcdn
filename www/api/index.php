@@ -1,6 +1,6 @@
 <?php
 
-const IN_SCRIPT = 1;
+define('IN_SCRIPT', 1);
 
 $root_path = './../../';
 
