@@ -6,6 +6,8 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
+error_reporting(E_ALL);
+
 use obregonco\B2\Client;
 use obregonco\B2\Bucket;
 
