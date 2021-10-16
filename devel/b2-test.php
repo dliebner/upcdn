@@ -18,6 +18,6 @@ $client = new Client(Config::get('b2_master_key_id'), [
 $client->version = 2; // By default will use version 1
 
 // Retrieve an array of Bucket objects on your account.
-$buckets = $client->listBuckets();
+$buckets = $client->listBuckets(true);
 
 print_r($buckets);
