@@ -21,7 +21,7 @@ $client->version = 2; // By default will use version 1
 $file = $client->upload([
     'BucketName' => 'bidglass-creatives',
     'FileName' => 'test/test.txt',
-    'Body' => fopen('./text.txt', 'r')
+    'Body' => fopen('./test.txt', 'r')
 ]);
 
 print_r($file);
