@@ -2,8 +2,10 @@
 
 # TODO: This script should be replaced by a C++ program for increased performance
 
-# GlobalLog "|/home/bgcdn/scripts/redis-pipe.sh" "%{end:sec}t %O %>s %U%q"
-# ts, bytes, status, URL
+# GlobalLog "|/home/bgcdn/scripts/redis-pipe.sh" "%{end:sec}t %O %>s %v %U%q"
+# ts, bytes, status, domain, URL
+
+BGCDN_HOSTNAME=$BGCDN_HOSTNAME
 
 while read logline; do
 
@@ -11,6 +13,7 @@ while read logline; do
 	ts=${parts[0]}
 	bytes=${parts[1]}
 	status=${parts[2]}
+	domain=${parts[3]}
 
 	# Cumulative chunk bandwidth
 	redis-cli INCRBY bgcdn:bw_chunk ${bytes}
@@ -28,9 +31,9 @@ while read logline; do
 	done
 
 	# 404s
-	if [ "$status" == "404" ]; then
+	if [ "${status}" == "404" ] && [ "$domain" == "${BGCDN_HOSTNAME}" ]; then
 
-		uri=${parts[3]}
+		uri=${parts[4]}
 		redis-cli HSETNX bgcdn:404_uris "$uri" 1
 
 	fi
