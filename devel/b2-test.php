@@ -17,14 +17,10 @@ $client = new Client(Config::get('b2_master_key_id'), [
 ]);
 $client->version = 2; // By default will use version 1
 
-$stream = fopen('game_hls.zip', 'r');
-
 $file = $client->upload([
     'BucketName' => 'bidglass-creatives',
     'FileName' => 'test/game_hls.zip',
-    'Body' => $stream
+    'Body' => fopen('game_hls.zip', 'r')
 ]);
-
-fclose($stream);
 
 print_r($file);
