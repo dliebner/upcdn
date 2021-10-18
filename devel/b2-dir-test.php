@@ -26,6 +26,7 @@ start_timer('upload');
 $bucketId = $client->getBucketFromName('bidglass-creatives')->getId();
 
 $dup = new DirectoryUploader($root_path . 'www/game_hls/', 'game_hls', $client, $bucketId);
+$dup->numUploadLanes = 100;
 
 $files = $dup->doUpload();
 
