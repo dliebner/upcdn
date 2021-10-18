@@ -30,4 +30,7 @@ $dup->numUploadLanes = 100;
 
 $files = $dup->doUpload();
 
+echo count($files) . " uploaded files.\n";
+echo count($dup->getAllFailedFiles()) . " failed files.\n";
+
 echo "\n" . stop_timer('upload') . "\n";
