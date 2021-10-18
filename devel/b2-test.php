@@ -17,11 +17,10 @@ $client = new Client(Config::get('b2_master_key_id'), [
 ]);
 $client->version = 2; // By default will use version 1
 
-// Retrieve an array of Bucket objects on your account.
 $file = $client->upload([
     'BucketName' => 'bidglass-creatives',
-    'FileName' => 'test/test.txt',
-    'Body' => fopen('./test.txt', 'r')
+    'FileName' => 'test/game_hls.zip',
+    'LocalFile' => 'game_hls.zip'
 ]);
 
 print_r($file);
