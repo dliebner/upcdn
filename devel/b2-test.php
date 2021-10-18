@@ -22,7 +22,7 @@ $stream = fopen('game_hls.zip', 'r');
 $file = $client->upload([
     'BucketName' => 'bidglass-creatives',
     'FileName' => 'test/game_hls.zip',
-    'LocalFile' => $stream
+    'Body' => $stream
 ]);
 
 fclose($stream);
