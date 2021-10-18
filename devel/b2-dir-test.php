@@ -25,21 +25,6 @@ $bucketId = $client->getBucketFromName('bidglass-creatives')->getId();
 
 $dup = new DirectoryUploader($root_path . 'www/game_hls/', 'game_hls', $client, $bucketId);
 
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-print_r($dup->getNextFile());
-
-exit;
-
 $files = $dup->doUpload();
 
 print_r($files);
