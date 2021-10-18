@@ -13,6 +13,8 @@ use obregonco\B2\Bucket;
 use obregonco\B2\ParallelUploader;
 use obregonco\B2\DirectoryUploader;
 
+const B2_DEBUG_ON = true;
+
 $client = new Client(Config::get('b2_master_key_id'), [
 	'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
 	'applicationKey' => Config::get('b2_application_key'),
