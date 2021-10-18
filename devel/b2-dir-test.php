@@ -21,6 +21,8 @@ $client = new Client(Config::get('b2_master_key_id'), [
 ]);
 $client->version = 2; // By default will use version 1
 
+start_timer('upload');
+
 $bucketId = $client->getBucketFromName('bidglass-creatives')->getId();
 
 $dup = new DirectoryUploader($root_path . 'www/game_hls/', 'game_hls', $client, $bucketId);
@@ -28,3 +30,5 @@ $dup = new DirectoryUploader($root_path . 'www/game_hls/', 'game_hls', $client, 
 $files = $dup->doUpload();
 
 print_r($files);
+
+echo "\n" . stop_timer('upload') . "\n";

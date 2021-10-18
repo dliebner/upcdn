@@ -17,6 +17,8 @@ $client = new Client(Config::get('b2_master_key_id'), [
 ]);
 $client->version = 2; // By default will use version 1
 
+start_timer('upload');
+
 $file = $client->upload([
     'BucketName' => 'bidglass-creatives',
     'FileName' => 'test/game_hls.zip',
@@ -24,3 +26,5 @@ $file = $client->upload([
 ]);
 
 print_r($file);
+
+echo "\n" . stop_timer('upload') . "\n";
