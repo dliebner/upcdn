@@ -40,6 +40,4 @@ for( $i = 1; $i <= 10; $i++ ) {
 
 $files = $pup->doUpload();
 
-print_r($files);
-
 echo "\n" . stop_timer('upload') . "\n";

@@ -29,6 +29,4 @@ $dup = new DirectoryUploader($root_path . 'www/game_hls/', 'game_hls', $client, 
 
 $files = $dup->doUpload();
 
-print_r($files);
-
 echo "\n" . stop_timer('upload') . "\n";
