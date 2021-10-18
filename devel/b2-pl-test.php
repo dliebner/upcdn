@@ -24,14 +24,14 @@ $pup = new ParallelUploader($client, $bucketId);
 
 $pup->addFileToUpload([
     'FileName' => 'test/test.txt',
-    'Body' => fopen('./test.txt', 'r')
+    'LocalFile' => "./test.txt"
 ]);
 
 for( $i = 1; $i <= 10; $i++ ) {
 
     $pup->addFileToUpload([
         'FileName' => "test/test$i.txt",
-        'Body' => fopen("./test$i.txt", 'r')
+        'LocalFile' => "./test$i.txt"
     ]);
 
 }
