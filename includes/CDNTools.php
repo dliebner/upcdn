@@ -1,14 +1,17 @@
 <?php
 
+// TODO: Rename to CDNClientTools.php
+
 if( !defined('IN_SCRIPT') ) die( "Hacking attempt" );
 
 class CDNClient {
 
-	const HUB_ACTION_VALIDATE_KEY = 'validateKey';
+	const HUB_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
 	const HUB_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
+	const HUB_ACTION_VALIDATE_CDN_TOKEN = 'validateCdnToken';
 
 	const CLIENT_ACTION_INIT_SERVER = 'initServer';
-	const CLIENT_ACTION_VALIDATE_KEY = 'validateKey';
+	const CLIENT_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
 	const CLIENT_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
 
 	public static function postToHub( $action, $params = array(), $options = array() ) {

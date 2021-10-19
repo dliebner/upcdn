@@ -53,7 +53,7 @@ if( !$secretKey ) {
 
 		$success = false;
 
-		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_KEY, [], [
+		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_SECRET_KEY, [], [
 			'serverId' => $newServerId,
 			'secretKey' => $newSecretKey,
 			'hubApiUrl' => $newHubApiUrl,
@@ -86,7 +86,7 @@ if( !$secretKey ) {
 
 switch( $payload->action ) {
 
-	case CDNClient::CLIENT_ACTION_VALIDATE_KEY:
+	case CDNClient::CLIENT_ACTION_VALIDATE_SECRET_KEY:
 
 		AjaxResponse::returnSuccess();
 
