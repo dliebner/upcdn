@@ -82,7 +82,7 @@ class CDNClient {
 		],[
 			'success' => function($response) use (&$success) {
 
-				if( $response->result ) $success = true;
+				if( $response->data && $response->data->result ) $success = true;
 
 			}
 		]);
