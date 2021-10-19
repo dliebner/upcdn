@@ -71,6 +71,26 @@ class CDNClient {
 		
 	}
 
+	public static function validateCdnToken($cdnToken, $action, $userId = null) {
+
+		$success = false;
+
+		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_SECRET_KEY, [
+			'tokenKey' => $cdnToken,
+			'action' => $action,
+			'userId' => $userId
+		],[
+			'success' => function($response) use (&$success) {
+
+				if( $response->result ) $success = true;
+
+			}
+		]);
+
+		return $success;
+
+	}
+
 	public static function syncClientServerStatus() {
 
 		self::postToHub(self::HUB_ACTION_SYNC_CLIENT_DATA, [
