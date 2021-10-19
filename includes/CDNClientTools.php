@@ -75,7 +75,7 @@ class CDNClient {
 
 		$success = false;
 
-		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_SECRET_KEY, [
+		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_CDN_TOKEN, [
 			'tokenKey' => $cdnToken,
 			'action' => $action,
 			'userId' => $userId
