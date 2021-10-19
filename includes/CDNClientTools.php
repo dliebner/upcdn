@@ -71,13 +71,14 @@ class CDNClient {
 		
 	}
 
-	public static function validateCdnToken($cdnToken, $action, $userId = null) {
+	public static function validateCdnToken($cdnToken, $action, $ip = null, $userId = null) {
 
 		$success = false;
 
 		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_CDN_TOKEN, [
 			'tokenKey' => $cdnToken,
 			'action' => $action,
+			'ip' => $ip,
 			'userId' => $userId
 		],[
 			'success' => function($response) use (&$success) {
