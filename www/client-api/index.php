@@ -21,11 +21,11 @@ require_once( $root_path . 'includes/JSONEncrypt.php');
  */
 
 // CORS
-$refHostname = $_SERVER['HTTP_ORIGIN'];
+$origin = $_SERVER['HTTP_ORIGIN'];
 
-if( CDNClient::isCorsDomain($refHostname) ) {
+if( CDNClient::corsOriginAllowed($origin) ) {
 
-	header('Access-Control-Allow-Origin: ' . $refHostname);
+	header('Access-Control-Allow-Origin: ' . $origin);
 
 } else {
 

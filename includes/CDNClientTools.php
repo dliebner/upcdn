@@ -71,11 +71,11 @@ class CDNClient {
 		
 	}
 
-	public static function isCorsDomain($domain) {
+	public static function corsOriginAllowed($origin) {
 
-		$corsDomains = explode(",", Config::get('cors_domains'));
+		$corsOrigins = explode(",", Config::get('cors_origins'));
 
-		return in_array($domain, $corsDomains);
+		return in_array($origin, $corsOrigins);
 
 	}
 
