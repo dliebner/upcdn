@@ -83,13 +83,6 @@ class CDNClient {
 
 		$success = false;
 
-		print_r([
-			'tokenKey' => $cdnToken,
-			'action' => $action,
-			'ip' => $ip,
-			'userId' => $userId
-		]); exit;
-
 		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_CDN_TOKEN, [
 			'tokenKey' => $cdnToken,
 			'action' => $action,
