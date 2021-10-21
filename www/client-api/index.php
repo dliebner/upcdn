@@ -47,10 +47,10 @@ switch( $action ) {
 					Simultaneously upload original to cloud storage
 				- Upload transcoded video to cloud storage
 		*/
-		$videoUploadToken = postdata_to_original($_POST['videoUploadToken']);
+		$cdnToken = postdata_to_original($_POST['cdnToken']);
 		$userId = (int)$_POST['userId'];
 
-		if( !CDNClient::validateCdnToken($videoUploadToken, $action, $_SERVER['REMOTE_ADDR'], $userId) ) {
+		if( !CDNClient::validateCdnToken($cdnToken, $action, $_SERVER['REMOTE_ADDR'], $userId) ) {
 
 			AjaxResponse::returnError("Invalid upload token.");
 
