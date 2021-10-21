@@ -20,6 +20,19 @@ require_once( $root_path . 'includes/JSONEncrypt.php');
  * 		
  */
 
+// CORS
+$refHostname = $_SERVER['HTTP_ORIGIN'];
+
+if( CDNClient::isCorsDomain($refHostname) ) {
+
+	header('Access-Control-Allow-Origin: ' . $refHostname);
+
+} else {
+
+	exit;
+
+}
+
 $action = postdata_to_original($_POST['action']);
 
 switch( $action ) {

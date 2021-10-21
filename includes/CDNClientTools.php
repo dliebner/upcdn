@@ -71,6 +71,14 @@ class CDNClient {
 		
 	}
 
+	public static function isCorsDomain($domain) {
+
+		$corsDomains = explode(",", Config::get('cors_domains'));
+
+		return in_array($domain, $corsDomains);
+
+	}
+
 	public static function validateCdnToken($cdnToken, $action, $ip = null, $userId = null) {
 
 		$success = false;
