@@ -82,7 +82,9 @@ switch( $action ) {
 		$cmd = escapeshellcmd(
 			"/usr/bin/docker run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile))
 		);
-		exec($cmd, $execOutput, $execResult);
+
+		//exec($cmd, $execOutput, $execResult);
+		passthru($cmd, $execResult);
 
 		// In-progress
 		AjaxResponse::returnSuccess([
