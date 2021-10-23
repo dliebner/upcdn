@@ -85,14 +85,26 @@ switch( $action ) {
 
 		exec($cmd, $execOutput, $execResult);
 
-		// In-progress
-		AjaxResponse::returnSuccess([
-			'files' => $_FILES,
-			'hubResponse' => $responseData,
-			'cmd' => $cmd,
-			'result' => $execResult,
-			'output' => $execOutput,
-		]);
+		if( $execResult === 0 || $execResult === 1 ) {
+
+			if( $ffprobeResult = json_decode(implode(PHP_EOL, $execOutput), true) ) {
+
+				unset($execOutput);
+
+				// In-progress
+				AjaxResponse::returnSuccess([
+					'files' => $_FILES,
+					'hubResponse' => $responseData,
+					'cmd' => $cmd,
+					'result' => $execResult,
+					'output' => $ffprobeResult,
+				]);
+
+			}
+
+		}
+
+		AjaxResponse::criticalDie("Error encoding video.");
 
 		break;
 
