@@ -80,13 +80,14 @@ switch( $action ) {
 		// ffprobe (TODO: functionize)
 		$pwd = escapeshellarg(dirname($tmpFile));
 		$cmd = "docker run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile));
-		$execResult = shell_exec($cmd);
+		exec($cmd, $execOutput, $execResult);
 
 		// In-progress
 		AjaxResponse::returnSuccess([
 			'files' => $_FILES,
 			'hubResponse' => $responseData,
-			'result' => $execResult
+			'result' => $execResult,
+			'output' => $execOutput,
 		]);
 
 		break;
