@@ -81,6 +81,11 @@ switch( $action ) {
 
 	default:
 
+		print_r([
+			'$_POST' => $_POST,
+			'$_FILES' => $_FILES
+		]);
+
 		AjaxResponse::criticalDie("Invalid action.");
 
 }
