@@ -80,7 +80,7 @@ switch( $action ) {
 		// ffprobe (TODO: functionize)
 		$pwd = escapeshellarg(dirname($tmpFile));
 		$cmd = escapeshellcmd(
-			"/usr/bin/docker run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile))
+			"/usr/bin/podman run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile))
 		);
 
 		exec($cmd, $execOutput, $execResult);
