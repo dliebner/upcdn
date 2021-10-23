@@ -69,12 +69,24 @@ switch( $action ) {
 		$maxDuration = $responseData['maxDuration'];
 
 		$_FILES['image']['name'];
-		$_FILES['image']['tmp_name'];
+		$tmpFile = $_FILES['image']['tmp_name'];
+
+		if( filesize($tmpFile) > $maxSizeBytes ) {
+
+			AjaxResponse::returnError("Max file size: " . humanFilesize($maxSizeBytes));
+
+		}
+
+		// ffprobe (TODO: functionize)
+		$pwd = escapeshellarg(dirname($tmpFile));
+		$cmd = "docker run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile));
+		$execResult = shell_exec($cmd);
 
 		// In-progress
 		AjaxResponse::returnSuccess([
 			'files' => $_FILES,
-			'hubResponse' => $responseData
+			'hubResponse' => $responseData,
+			'result' => $execResult
 		]);
 
 		break;

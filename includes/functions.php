@@ -139,6 +139,28 @@ function mkdir_recursive($pathname, $mode=0755)
     }
 }
 
+function humanFilesize($bytes) {
+
+	if( $bytes > 1048576 ) {
+
+		return sprintf('%.2f MiB', $bytes / 1048576);
+
+	} else {
+
+		if( $bytes > 1024 ) {
+
+			return sprintf('%.2f KiB', $bytes / 1024);
+
+		} else {
+
+			return sprintf('%d bytes', $bytes);
+
+		}
+		
+	}
+
+}
+
 function getimageinfo($filelocation, $maxDlSize = 5242880) {
 	
 	global $root_path;
