@@ -86,6 +86,7 @@ switch( $action ) {
 		AjaxResponse::returnSuccess([
 			'files' => $_FILES,
 			'hubResponse' => $responseData,
+			'cmd' => $cmd,
 			'result' => $execResult,
 			'output' => $execOutput,
 		]);
