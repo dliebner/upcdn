@@ -6,6 +6,17 @@ if( !defined('IN_SCRIPT') ) die( "Hacking attempt" );
 
 class CDNClient {
 
+	/**
+	 * Directories:
+	 * 	- Uploads in progress (PHP temp dir)
+	 * 	- Transcoding in progress
+	 * 		Source file
+	 * 		Output file or path (ie HLS)
+	 */
+	const DIR_TRANSCODE_IN_PROGRESS = 'transcoding/';
+	const DIR_TRANSCODE_OUTPUT = 'out/';
+	const DIR_WWW = 'www/';
+
 	const HUB_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
 	const HUB_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
 	const HUB_ACTION_VALIDATE_CDN_TOKEN = 'validateCdnToken';
@@ -79,7 +90,7 @@ class CDNClient {
 
 	}
 
-	public static function validateCdnToken($cdnToken, $action, $ip = null, $userId = null) {
+	public static function validateCdnToken($cdnToken, $action, &$hubResponseData = null, $ip = null, $userId = null) {
 
 		$success = false;
 
@@ -89,9 +100,11 @@ class CDNClient {
 			'ip' => $ip,
 			'userId' => $userId
 		],[
-			'success' => function($response) use (&$success) {
+			'success' => function($response) use (&$success, &$hubResponseData) {
 
 				if( $response->data && $response->data->result ) $success = true;
+
+				$hubResponseData = $response->data->extra ? (array)$response->data->extra : null;
 
 			}
 		]);
