@@ -81,7 +81,7 @@ switch( $action ) {
 		$pwd = escapeshellarg(dirname($tmpFile));
 		$cmd = escapeshellcmd(
 			//"/usr/bin/docker run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile))
-			"/home/bgcdn/scripts/docker-ffprobe.sh -d $pwd -f " . escapeshellarg(basename($tmpFile))
+			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $pwd -f " . escapeshellarg(basename($tmpFile))
 		);
 
 		exec($cmd, $execOutput, $execResult);
