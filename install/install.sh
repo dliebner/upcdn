@@ -14,7 +14,7 @@ chmod +x ../cron/*.sh
 
 # general dependencies
 sudo apt update
-sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python unzip ufw
+sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python unzip ufw zip
 
 # webmin repo + key
 echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee /etc/apt/sources.list.d/webmin.list > /dev/null
@@ -108,14 +108,18 @@ sudo useradd -m -s /bin/bash bgcdn
 
 # install composer extensions
 composer require gabrielelana/byte-units
-composer require guzzlehttp/guzzle:^6.3.0
+composer require guzzlehttp/guzzle:^7
+composer require obregonco/backblaze-b2
 
 # copy files
-sudo cp bgcdn.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
 sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
+sudo cp bgcdn-sudoers /etc/sudoers.d/
 
 # replace occurences of BGCDN_HOSTNAME in conf files
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+# replace occurences of BGCDN_HOSTNAME in scripts
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /home/bgcdn/scripts/redis-pipe.sh
 
 # soft link
 sudo ln -rs /etc/apache2/sites-available/${BGCDN_HOSTNAME}* /etc/apache2/sites-enabled/

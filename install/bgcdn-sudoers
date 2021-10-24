@@ -1,0 +1,2 @@
+# Allows Apache to run these scripts as sudo (i.e. as a way to proxy limited commands to docker)
+www-data ALL=NOPASSWD: /home/bgcdn/scripts/docker-ffprobe.sh
