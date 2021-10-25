@@ -65,6 +65,7 @@ switch( $action ) {
 		}
 
 		// Validate video file
+		$fileUploadLimit = $responseData['fileUploadLimit'];
 		$maxSizeBytes = $responseData['maxSizeBytes'];
 		$maxDuration = $responseData['maxDuration'];
 
@@ -73,9 +74,9 @@ switch( $action ) {
 
 		$fileSizeBytes = filesize($tmpFile);
 
-		if( $fileSizeBytes > $maxSizeBytes ) {
+		if( $fileSizeBytes > $fileUploadLimit ) {
 
-			AjaxResponse::returnError("Max file size: " . humanFilesize($maxSizeBytes));
+			AjaxResponse::returnError("Max file size: " . humanFilesize($fileUploadLimit));
 
 		}
 
@@ -103,7 +104,7 @@ switch( $action ) {
 
 				}
 
-				if( $probeResult->duration > $maxDuration && $fileSizeBytes > $maxSizeBytes ) {
+				if( $fileSizeBytes > $maxSizeBytes && $probeResult->duration > $maxDuration ) {
 
 					AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long or " . humanFilesize($maxSizeBytes) . ".");
 
@@ -114,6 +115,17 @@ switch( $action ) {
 				$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
 				$versionWidth = $responseData['versionWidth'];
 				$versionHeight = $responseData['versionHeight'];
+
+				if( $fileSizeBytes <= $targetSizeBytes ) {
+
+					// Video is already under our target
+					// Accept as-is or transcode to remove metadata?
+
+				} else {
+
+
+
+				}
 
 				// In-progress
 				AjaxResponse::returnSuccess([
