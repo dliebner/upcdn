@@ -71,17 +71,19 @@ switch( $action ) {
 		$_FILES['image']['name'];
 		$tmpFile = $_FILES['image']['tmp_name'];
 
-		if( filesize($tmpFile) > $maxSizeBytes ) {
+		$fileSizeBytes = filesize($tmpFile);
+
+		if( $fileSizeBytes > $maxSizeBytes ) {
 
 			AjaxResponse::returnError("Max file size: " . humanFilesize($maxSizeBytes));
 
 		}
 
 		// ffprobe (TODO: functionize)
-		$pwd = escapeshellarg(dirname($tmpFile));
+		$dir = escapeshellarg(dirname($tmpFile));
+		$filename = escapeshellarg(basename($tmpFile));
 		$cmd = escapeshellcmd(
-			//"/usr/bin/docker run -v $pwd:$pwd -w $pwd dliebner/ffmpeg-entrydefault ffprobe -v quiet -print_format json -show_format -show_streams " . escapeshellarg(basename($tmpFile))
-			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $pwd -f " . escapeshellarg(basename($tmpFile))
+			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $pwd -f $filename"
 		);
 
 		exec($cmd, $execOutput, $execResult);
@@ -92,6 +94,27 @@ switch( $action ) {
 
 				unset($execOutput);
 
+				// Check probe result
+				$probeResult = new FFProbeResult($ffprobeResult);
+
+				if( !$videoStream = $probeResult->videoStreams[0] ) {
+
+					AjaxResponse::returnError("Invalid video file.");
+
+				}
+
+				if( $probeResult->duration > $maxDuration && $fileSizeBytes > $maxSizeBytes ) {
+
+					AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long or " . humanFilesize($maxSizeBytes) . ".");
+
+				}
+
+				// Encode video file
+				$targetBitRate = $responseData['bitRate'];
+				$targetSize = ceil($targetBitRate * $probeResult->duration);
+				$versionWidth = $responseData['versionWidth'];
+				$versionHeight = $responseData['versionHeight'];
+
 				// In-progress
 				AjaxResponse::returnSuccess([
 					'files' => $_FILES,
@@ -99,6 +122,13 @@ switch( $action ) {
 					'cmd' => $cmd,
 					'result' => $execResult,
 					'output' => $ffprobeResult,
+					'probeResult' => $probeResult,
+					'transcodeTargets' => [
+						'bitRate' => $targetBitRate,
+						'size' => $targetSize,
+						'width' => $versionWidth,
+						'height' => $versionHeight
+					]
 				]);
 
 			}

@@ -324,3 +324,131 @@ class CpuPercentCalculator {
 	}
 
 }
+
+class FFProbeResult_Stream {
+
+	public $codecType;
+	public $codecName;
+	public $bitRate;
+	public $duration;
+
+	protected function __construct($obj) {
+
+		$this->codecType = $obj['codec_type'];
+		$this->codecName = $obj['codec_name'];
+
+		$this->bitRate = (int)$obj['bit_rate'];
+		$this->duration = (float)$obj['duration'];
+		
+	}
+
+	public static function createFromJson($json) {
+
+		if( is_string($json) ) $json = json_decode($json, true);
+		if( is_object($json) ) $json = (array)$json;
+		if( !is_array($json) ) throw new Exception("Error creating FFProbeResult_Stream from \$json");
+
+		$codecType = $json['codec_type'];
+
+		switch( $codecType ) {
+
+			case 'video': return new FFProbeResult_VideoStream($json);
+			case 'audio': return new FFProbeResult_AudioStream($json);
+
+			default: throw new Exception("Unknown codec type");
+
+		}
+
+	}
+
+}
+
+class FFProbeResult_VideoStream extends FFProbeResult_Stream {
+
+	public $width;
+	public $height;
+	public $sampleAspectRatioString;
+	public $sampleAspectRatioFloat;
+	public $displayAspectRatioString;
+	public $displayAspectRatioFloat;
+
+	protected function __construct($obj) {
+
+		parent::__construct($obj);
+
+		$this->width = (int)$obj['width'];
+		$this->height = (int)$obj['height'];
+
+		$this->sampleAspectRatioString = $sar = $obj['sample_aspect_ratio'];
+		$sarParts = explode(':', $sar);
+		$this->sampleAspectRatioFloat = $sarParts[0] / $sarParts[1];
+
+		$this->displayAspectRatioString = $dar = $obj['display_aspect_ratio'];
+		$darParts = explode(':', $dar);
+		$this->displayAspectRatioFloat = $darParts[0] / $darParts[1];
+		
+	}
+
+	public function displayWidth() {
+
+		return $this->width;
+
+	}
+
+	public function displayHeight() {
+
+		return round($this->width / $this->displayAspectRatioFloat);
+
+	}
+
+}
+
+class FFProbeResult_AudioStream extends FFProbeResult_Stream {
+
+
+
+}
+
+class FFProbeResult {
+
+	public $probeScore;
+	public $duration;
+	public $sizeBytes;
+	public $bitRate;
+	public $formats = [];
+
+	public $videoStreams = [];
+	public $audioStreams = [];
+
+	public function __construct($json) {
+
+		if( is_string($json) ) $json = json_decode($json, true);
+		if( is_object($json) ) $json = (array)$json;
+		if( !is_array($json) ) throw new Exception("Error constructing FFProbeResult from \$json");
+		if( !$format = $json['format'] ) throw new Exception("Error reading format");
+		if( !$streams = $json['streams'] ) throw new Exception("Error reading streams");
+
+		$this->probeScore = (int)$format['probe_score'];
+		$this->duration = (float)$format['duration'];
+		$this->sizeBytes = (int)$format['size'];
+		$this->formats = explode(',', $format['format_name']);
+
+		foreach( $streams as $streamObj ) {
+
+			$stream = FFProbeResult_Stream::createFromJson($streamObj);
+
+			if( $stream instanceof FFProbeResult_VideoStream ) {
+
+				$this->videoStreams[] = $stream;
+
+			} else if( $stream instanceof FFProbeResult_AudioStream ) {
+
+				$this->audioStreams[] = $stream;
+
+			}
+
+		}
+		
+	}
+
+}
