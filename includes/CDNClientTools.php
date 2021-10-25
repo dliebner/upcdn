@@ -431,6 +431,7 @@ class FFProbeResult {
 		$this->probeScore = (int)$format['probe_score'];
 		$this->duration = (float)$format['duration'];
 		$this->sizeBytes = (int)$format['size'];
+		$this->bitRate = (int)$format['bit_rate'];
 		$this->formats = explode(',', $format['format_name']);
 
 		foreach( $streams as $streamObj ) {
