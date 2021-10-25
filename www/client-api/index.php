@@ -83,7 +83,7 @@ switch( $action ) {
 		$dir = escapeshellarg(dirname($tmpFile));
 		$filename = escapeshellarg(basename($tmpFile));
 		$cmd = escapeshellcmd(
-			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $pwd -f $filename"
+			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $dir -f $filename"
 		);
 
 		exec($cmd, $execOutput, $execResult);
