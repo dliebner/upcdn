@@ -111,7 +111,7 @@ switch( $action ) {
 
 				// Encode video file
 				$targetBitRate = $responseData['bitRate'];
-				$targetSize = ceil($targetBitRate * $probeResult->duration);
+				$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
 				$versionWidth = $responseData['versionWidth'];
 				$versionHeight = $responseData['versionHeight'];
 
@@ -125,7 +125,7 @@ switch( $action ) {
 					'probeResult' => $probeResult,
 					'transcodeTargets' => [
 						'bitRate' => $targetBitRate,
-						'size' => $targetSize,
+						'sizeBytes' => $targetSizeBytes,
 						'width' => $versionWidth,
 						'height' => $versionHeight
 					]
