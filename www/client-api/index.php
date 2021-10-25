@@ -136,6 +136,7 @@ switch( $action ) {
 		}
 
 		AjaxResponse::returnError("Error encoding video.", in_array($_SERVER['REMOTE_ADDR'], explode(",", Config::get('debug_ips'))) ? [
+			'cmd' => $cmd,
 			'execResult' => $execResult,
 			'execOutput' => $execOutput,
 			'ffprobeResult' => $ffprobeResult
