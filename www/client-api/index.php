@@ -135,8 +135,9 @@ switch( $action ) {
 
 		}
 
-		AjaxResponse::criticalDie("Error encoding video.", in_array($_SERVER['REMOTE_ADDR'], explode(",", Config::get('debug_ips'))) ? [
+		AjaxResponse::returnError("Error encoding video.", in_array($_SERVER['REMOTE_ADDR'], explode(",", Config::get('debug_ips'))) ? [
 			'execResult' => $execResult,
+			'execOutput' => $execOutput,
 			'ffprobeResult' => $ffprobeResult
 		] : null);
 
