@@ -90,7 +90,7 @@ class CDNClient {
 
 	}
 
-	public static function validateCdnToken($cdnToken, $action, &$hubResponseData = null, $ip = null, $userId = null) {
+	public static function validateCdnToken($cdnToken, $action, &$hubResponseDataArray = null, $ip = null, $userId = null) {
 
 		$success = false;
 
@@ -100,11 +100,11 @@ class CDNClient {
 			'ip' => $ip,
 			'userId' => $userId
 		],[
-			'success' => function($response) use (&$success, &$hubResponseData) {
+			'success' => function($response) use (&$success, &$hubResponseDataArray) {
 
 				if( $response->data && $response->data->result ) $success = true;
 
-				$hubResponseData = $response->data->extra ? (array)$response->data->extra : null;
+				$hubResponseDataArray = (array)$response->data;
 
 			}
 		]);
