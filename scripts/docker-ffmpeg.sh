@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts d:i:o:b:w:h:sm flag
+while getopts d:i:o:b:w:h:s:m flag
 do
     case "${flag}" in
         d) dir=${OPTARG};;
@@ -9,7 +9,7 @@ do
         b) bitRate=${OPTARG};;
         w) constrainWidth=${OPTARG};;
         h) constrainHeight=${OPTARG};;
-        s) hlsFormat=1;;
+        s) hlsOutputDir=${OPTARG};;
         m) mute=1;;
     esac
 done
@@ -23,16 +23,20 @@ fi
 
 
 encodeParams=()
+postEncodeChownParams=()
 
 if [ ! -z "$mute" ]; then
 	encodeParams+=( -an )
 fi
 
-if [ ! -z "$hlsFormat" ]; then
+if [ ! -z "$hlsOutputDir" ]; then
 	encodeParams+=( -f hls )
 	encodeParams+=( -hls_playlist_type vod )
 	encodeParams+=( -hls_init_time 2 )
 	encodeParams+=( -hls_time 7 )
+    postEncodeChownParams+=( -R $UID:$UID $hlsOutputDir )
+else
+    postEncodeChownParams+=( $UID:$UID $outFile )
 fi
 
 
@@ -49,5 +53,5 @@ docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault /bin/bash -c \
     -map 0:v:0 -map 0:a:0 \
     -map_metadata -1 \
     ${encodeParams[@]} \
-    $outFile && \
-chown $UID:$UID $outFile"
+    $hlsOutputDir$outFile && \
+chown ${postEncodeChownParams[@]}"
