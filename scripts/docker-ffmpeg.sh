@@ -48,6 +48,6 @@ docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault /bin/bash -c \
     -movflags +faststart -pix_fmt yuv420p \
     -map 0:v:0 -map 0:a:0 \
     -map_metadata -1 \
-    ${encodeParams[@]}
+    ${encodeParams[@]} \
     $outFile && \
 chown $UID:$UID $outFile"
