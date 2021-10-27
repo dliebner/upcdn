@@ -53,5 +53,5 @@ docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault /bin/bash -c \
     -map 0:v:0 -map 0:a:0 \
     -map_metadata -1 \
     ${encodeParams[@]} \
-    $hlsOutputDir$outFile && \
+    ${hlsOutputDir}${outFile} && \
 chown ${postEncodeChownParams[@]}"
