@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts d:f: flag
+while getopts d:i:o:b:w:h:sm flag
 do
     case "${flag}" in
         d) dir=${OPTARG};;
