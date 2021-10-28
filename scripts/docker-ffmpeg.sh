@@ -31,6 +31,7 @@ fi
 
 if [ ! -z "$hlsOutput" ]; then
     if [ -z "$hlsTime" ]; then
+        # aiming for 400k chunks by default
         divide=400000; (( by=bitRate/8 )); (( hlsTime=(divide+by-1)/by ))
     fi
     if [ $hlsTime -lt 2 ]; then

@@ -64,13 +64,22 @@ switch( $action ) {
 
 		}
 
+		// Grab metadata
+		$meta = $responseData['meta'];
+
 		// Validate video file
 		$fileUploadLimit = $responseData['fileUploadLimit'];
 		$maxSizeBytes = $responseData['maxSizeBytes'];
 		$maxDuration = $responseData['maxDuration'];
 
-		$_FILES['image']['name'];
+		//$originalFilename = $_FILES['image']['name'];
 		$tmpFile = $_FILES['image']['tmp_name'];
+
+		if( !is_uploaded_file($tmpFile) ) {
+
+			AjaxResponse::returnError("Error reading the uploaded file.");
+
+		}
 
 		$fileSizeBytes = filesize($tmpFile);
 
@@ -98,32 +107,114 @@ switch( $action ) {
 				// Check probe result
 				$probeResult = new FFProbeResult($ffprobeResult);
 
+				/** @var FFProbeResult_VideoStream */
 				if( !$videoStream = $probeResult->videoStreams[0] ) {
 
 					AjaxResponse::returnError("Invalid video file.");
 
 				}
 
-				if( $fileSizeBytes > $maxSizeBytes && $probeResult->duration > $maxDuration ) {
-
-					AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long or " . humanFilesize($maxSizeBytes) . ".");
-
-				}
-
-				// Encode video file
+				// Video encoding settings
 				$targetBitRate = $responseData['bitRate'];
+				$duration = $probeResult->duration;
 				$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
-				$versionWidth = $responseData['versionWidth'];
-				$versionHeight = $responseData['versionHeight'];
+				$targetWidth = $responseData['width'];
+				$targetHeight = $responseData['height'];
+				$hlsByteSizeThreshold = $responseData['hlsByteSizeThreshold'];
+				$passThroughVideo = $fileSizeBytes <= $maxSizeBytes && $videoStream->codecName === 'h264';
 
-				if( $fileSizeBytes <= $targetSizeBytes ) {
+				// Source video info
+				$sourceWidth = $videoStream->displayWidth();
+				$sourceHeight = $videoStream->displayHeight();
 
-					// Video is already under our target
-					// Accept as-is or transcode to remove metadata?
+				// Determine constraining width/height
+				$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
+				$targetAspectRatio = $targetWidth / $targetHeight;
+
+				if( $uploadedAspectRatio > $targetAspectRatio ) {
+
+					// Uploaded video is "wider" (proportionally) than the target dimensions
+					$constrainWidth = $targetWidth;
+					$constrainHeight = -1;
 
 				} else {
 
+					// Uploaded video is "taller" (proportionally) than the target dimensions
+					$constrainWidth = -1;
+					$constrainHeight = $targetHeight;
 
+				}
+				
+				if( $passThroughVideo && $fileSizeBytes < $hlsByteSizeThreshold ) {
+
+					// Don't need to save as HLS if we can passthrough and we're under the HLS byte size threshold
+					$saveAsHls = false;
+
+				} else {
+
+					$passThroughVideo = false;
+
+					$saveAsHls = $targetSizeBytes >= $hlsByteSizeThreshold;
+
+				}
+
+				if( !($passThroughVideo || $probeResult->duration <= $maxDuration) ) {
+
+					AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long.");
+
+				}
+
+				$sha1 = sha1_file($tmpFile);
+
+				/**
+				 * Submit to hub server to add video:
+				 * 	- creative_video_src (if not exists based on file hash)
+				 *  - creative_video_versions
+				 * 
+				 * Get:
+				 * 	- src filename
+				 * 	- version_filename?
+				 */
+
+				if( !CDNClient::createSourceVideo($meta, $sourceWidth, $sourceHeight, $fileSizeBytes, $duration, $ffprobeResult, $saveAsHls, $sha1, $hubResponseDataArray) ) {
+
+					AjaxResponse::returnError("Error saving source video.");
+
+				}
+
+				$sourceFilename = $hubResponseDataArray['sourceFilename'];
+				$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
+				$versionFilename = $hubResponseDataArray['versionFilename'];
+
+				// Start new job
+				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $versionFilename, new TranscodingJobSettings(
+					$targetBitRate,
+					$constrainWidth,
+					$constrainHeight,
+					$passThroughVideo,
+					$saveAsHls,
+					null,
+					true
+				));
+
+				// Move file to in-progress folder (/home/bgcdn/transcoding)
+				if( !move_uploaded_file($tmpFile, $tcJob->inProgressPath()) ) {
+
+					AjaxResponse::returnError("Error preparing transcoding job.");
+
+				}
+
+				$tcJob->startTranscode();
+
+				// TODO: start the docker transcode and assign the docker container ID to the job
+
+				if( $passThroughVideo ) {
+
+					// Video is already under our target size and h264, just put into an mp4 container and remove metadata
+
+				} else {
+
+					// Add transcoding_jobs entry
 
 				}
 
@@ -138,8 +229,8 @@ switch( $action ) {
 					'transcodeTargets' => [
 						'bitRate' => $targetBitRate,
 						'sizeBytes' => $targetSizeBytes,
-						'width' => $versionWidth,
-						'height' => $versionHeight
+						'width' => $targetWidth,
+						'height' => $targetHeight
 					]
 				]);
 
