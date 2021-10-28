@@ -700,8 +700,8 @@ class TranscodingJob {
 		$this->dockerContainerId = $dockerContainerId;
 
 		$sql = "UPDATE transcoding_jobs
-			SET docker_container_id = '" . original_to_query($dockerContainerId) . "'
-			transcode_started = CASE WHEN transcode_started IS NULL THEN NOW() ELSE transcode_started END
+			SET docker_container_id = '" . original_to_query($dockerContainerId) . "',
+				transcode_started = CASE WHEN transcode_started IS NULL THEN NOW() ELSE transcode_started END
 			WHERE id = " . (int)$this->id;
 
 		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
