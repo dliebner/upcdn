@@ -95,7 +95,7 @@ class CDNClient {
 
 		$success = false;
 
-		CDNClient::postToHub(CDNClient::HUB_ACTION_VALIDATE_CDN_TOKEN, [
+		self::postToHub(self::HUB_ACTION_VALIDATE_CDN_TOKEN, [
 			'tokenKey' => $cdnToken,
 			'action' => $action,
 			'ip' => $ip,
@@ -120,7 +120,7 @@ class CDNClient {
 
 		if( !is_string($ffprobeResultJson) ) $ffprobeResultJson = json_encode($ffprobeResultJson);
 
-		CDNClient::postToHub('createSourceVideo', [
+		self::postToHub(self::HUB_ACTION_CREATE_SOURCE_VIDEO, [
 			'meta' => $meta,
 			'sourceWidth' => $sourceWidth,
 			'sourceHeight' => $sourceHeight,
@@ -131,7 +131,7 @@ class CDNClient {
 		],[
 			'success' => function($response) use (&$success, &$hubResponseDataArray) {
 
-				if( $response->data && $response->data->result ) $success = true;
+				$success = true;
 
 				$hubResponseDataArray = (array)$response->data;
 
