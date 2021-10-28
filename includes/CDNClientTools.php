@@ -681,14 +681,12 @@ class TranscodingJob {
 			src_filename,
 			src_is_new,
 			version_filename,
-			job_settings,
-			cloud_upload_started
+			job_settings
 		) VALUES (
 			'" . original_to_query($srcFilename) . "',
 			" . (int)$srcIsNew . ",
 			'" . original_to_query($versionFilename) . "',
-			'" . original_to_query(json_encode($jobSettings)) . "',
-			" . ($srcIsNew ? "0" : "NULL") . "
+			'" . original_to_query(json_encode($jobSettings)) . "'
 		)";
 
 		if( !$db->sql_query($sql) ) throw new QueryException("Could not insert into transcoding_jobs", $sql);
