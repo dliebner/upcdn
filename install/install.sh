@@ -115,6 +115,7 @@ composer require obregonco/backblaze-b2
 sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
 sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
 sudo cp bgcdn-sudoers /etc/sudoers.d/
+sudo cp bgcdn-cron /etc/cron.d/
 
 # replace occurences of BGCDN_HOSTNAME in conf files
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
