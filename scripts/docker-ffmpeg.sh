@@ -23,7 +23,6 @@ fi
 
 
 encodeParams=()
-postEncodeChownParams=()
 
 if [ ! -z "$mute" ]; then
 	encodeParams+=( -an )
@@ -34,9 +33,6 @@ if [ ! -z "$hlsOutputDir" ]; then
 	encodeParams+=( -hls_playlist_type vod )
 	encodeParams+=( -hls_init_time 2 )
 	encodeParams+=( -hls_time 7 )
-    postEncodeChownParams+=( -R $UID:$UID $hlsOutputDir )
-else
-    postEncodeChownParams+=( $UID:$UID $outFile )
 fi
 
 
@@ -52,6 +48,4 @@ docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault ffmpeg -hwaccel non
 -map 0:v:0 -map 0:a:0 \
 -map_metadata -1 \
 "${encodeParams[@]}" \
-"${hlsOutputDir}${outFile}"
-
-# TODO: figure out how to safely chown the output to bgcdn user
+"$outFile"
