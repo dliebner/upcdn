@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts d:i:o:b:w:h:s:m flag
+while getopts d:i:o:b:w:h:st:m flag
 do
     case "${flag}" in
         d) dir=${OPTARG};;
@@ -9,7 +9,8 @@ do
         b) bitRate=${OPTARG};;
         w) constrainWidth=${OPTARG};;
         h) constrainHeight=${OPTARG};;
-        s) hlsOutputDir=${OPTARG};;
+        s) hlsOutput=1;;
+        t) hlsTime=${OPTARG};;
         m) mute=1;;
     esac
 done
@@ -28,11 +29,19 @@ if [ ! -z "$mute" ]; then
 	encodeParams+=( -an )
 fi
 
-if [ ! -z "$hlsOutputDir" ]; then
+if [ ! -z "$hlsOutput" ]; then
+    if [ ! -z "$hlsTime" ]; then
+        divide=400000; (( by=bitRate/8 )); (( hlsTime=(divide+by-1)/by ))
+    fi
+    if [ $hlsTime -lt 2 ]; then
+        hlsInitTime=1
+    else
+        hlsInitTime=2
+    fi
 	encodeParams+=( -f hls )
 	encodeParams+=( -hls_playlist_type vod )
-	encodeParams+=( -hls_init_time 2 )
-	encodeParams+=( -hls_time 7 )
+	encodeParams+=( -hls_init_time "$hlsInitTime" )
+	encodeParams+=( -hls_time "$hlsTime" )
 fi
 
 
