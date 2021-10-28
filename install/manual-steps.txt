@@ -22,17 +22,5 @@ vi /etc/php/7.4/fpm/pool.d/www.conf
 # pm.max_children = 10
 # pm.max_requests = 100000
 
-
-# (as user transcodey)
-su transcodey
-
-crontab -e
-* * * * * /home/transcodey/cron/redis-bw-cron.sh
-* * * * * /usr/bin/php7.4 /home/bgcdn/cron/add-bw-chunk.php
-* * * * * /usr/bin/php7.4 /home/bgcdn/cron/disk-stats.php
-
-# Prune old stopped docker containers (timestamp is relative to when container started)
-11 * * * * docker container prune --filter "until=48h" -f
-
 # run certbot
 certbot --apache
