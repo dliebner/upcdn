@@ -632,7 +632,7 @@ class TranscodingJob {
 	public function startTranscode() {
 
 		// Required
-		$dir = $this->inProgressDir();
+		if( !$dir = realpath($this->inProgressDir()) ) throw new Exception("Error getting absolute path");
 		$inFile = $this->srcFilename;
 		$outFile = CDNClient::DIR_TRANSCODE_OUTPUT . (
 			$this->jobSettings->saveAsHls ? $this->versionFilename . '/index.m3u8' : $this->versionFilename . '.mp4'
