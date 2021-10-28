@@ -411,6 +411,12 @@ function groupObjectsByProperties(array &$arr, array $groupBy, array $options = 
 	
 }
 
+function debugEnabled() {
+
+	return in_array($_SERVER['REMOTE_ADDR'], explode(",", Config::get('debug_ips')));
+
+}
+
 class QueryException extends Exception {
 	
 	public $sql;
@@ -433,6 +439,24 @@ class QueryException extends Exception {
 	}
 	
 }
+
+class GeneralExceptionWithData extends Exception {
+
+	public $data;
+
+	public function __construct($message, $data) {
+
+		$this->data = $data;
+		
+		parent::__construct($message, 0, null);
+		
+	}
+
+}
+
+class GeneralException extends Exception {}
+class CriticalException extends Exception {}
+class SilentAjaxException extends Exception {}
 
 class AjaxResponse {
 	

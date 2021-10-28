@@ -687,6 +687,12 @@ class TranscodingJob {
 
 		}
 
+		throw new GeneralExceptionWithData("Error starting job", debugEnabled() ? [
+			'cmd' => $cmd,
+			'execResult' => $execResult,
+			'execOutput' => $execOutput
+		] : null);
+
 	}
 
 	public function setDockerContainerId($dockerContainerId) {

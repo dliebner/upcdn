@@ -7,12 +7,6 @@ $root_path = './../../';
 include_once( $root_path . 'common.php' );
 require_once( $root_path . 'includes/JSONEncrypt.php');
 
-function debugEnabled() {
-
-	return in_array($_SERVER['REMOTE_ADDR'], explode(",", Config::get('debug_ips')));
-
-}
-
 function default_exception_handler($e) {
 	
 	$eClass = get_class($e);
