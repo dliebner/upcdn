@@ -56,7 +56,7 @@ docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault ffmpeg -hwaccel non
 -vf "select='eq(n,0)+if(gt(t-prev_selected_t,1/30.50),1,0)'",scale="$constrainWidth:$constrainHeight" -vsync 0 \
 -sws_flags bicubic \
 -movflags +faststart -pix_fmt yuv420p \
--map 0:v:0 -map 0:a:0 \
+-map 0:v:0 -map 0:a:0? \
 -map_metadata -1 \
 "${encodeParams[@]}" \
 "$outFile"
