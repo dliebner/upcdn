@@ -176,7 +176,7 @@ switch( $action ) {
 				 * 	- version_filename?
 				 */
 
-				if( !CDNClient::createSourceVideo($meta, $sourceWidth, $sourceHeight, $fileSizeBytes, $duration, $ffprobeResult, $saveAsHls, $sha1, $hubResponseDataArray) ) {
+				if( !CDNClient::createSourceVideo($meta, $sourceWidth, $sourceHeight, $fileSizeBytes, $duration, $ffprobeResult, $sha1, $hubResponseDataArray) ) {
 
 					AjaxResponse::returnError("Error saving source video.");
 
