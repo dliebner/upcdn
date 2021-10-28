@@ -282,7 +282,7 @@ switch( $action ) {
 				));
 
 				// Move file to in-progress folder (/home/bgcdn/transcoding)
-				if( !move_uploaded_file($tmpFile, $tcJob->inProgressPath()) ) {
+				if( !$tcJob->moveUploadedFile($tmpFile) ) {
 
 					AjaxResponse::returnError("Error preparing transcoding job.");
 

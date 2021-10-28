@@ -580,13 +580,13 @@ class TranscodingJob {
 
 		global $root_path;
 
-		return $root_path . CDNClient::DIR_TRANSCODE_IN_PROGRESS;
+		return $root_path . CDNClient::DIR_TRANSCODE_IN_PROGRESS . $this->versionFilename . '/';
 
 	}
 
 	public function inProgressPath() {
 
-		return $this->inProgressDir() . $this->versionFilename;
+		return $this->inProgressDir() . $this->srcFilename;
 
 	}
 
@@ -612,15 +612,44 @@ class TranscodingJob {
 
 	}
 
+	public function moveUploadedFile($tmpFile) {
+
+		$dir = $this->inProgressDir();
+		if( !is_dir($dir) ) {
+	
+			if( !mkdir_recursive($dir, 0775)) {
+				
+				throw new Exception("Could not create progress dir.");
+				
+			}
+			
+		}
+
+		return move_uploaded_file($tmpFile, $this->inProgressPath());
+
+	}
+
 	public function startTranscode() {
 
 		// Required
 		$dir = $this->inProgressDir();
 		$inFile = $this->srcFilename;
 		$outFile = CDNClient::DIR_TRANSCODE_OUTPUT . (
-			$this->jobSettings->saveAsHls ? $this->srcFilename . '/index.m3u8' : $this->srcFilename . '.mp4'
+			$this->jobSettings->saveAsHls ? $this->versionFilename . '/index.m3u8' : $this->versionFilename . '.mp4'
 		);
 		$bitRate = $this->jobSettings->bitRate;
+
+		// Create output dir if it doesn't exist
+		$outDir = $dir . CDNClient::DIR_TRANSCODE_OUTPUT;
+		if( !is_dir($outDir) ) {
+	
+			if( !mkdir_recursive($outDir, 0775)) {
+				
+				throw new Exception("Could not create output dir.");
+				
+			}
+			
+		}
 
 		// Optional
 		$cmdOptions = [];
