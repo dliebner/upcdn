@@ -45,6 +45,7 @@ if [ ! -z "$hlsOutput" ]; then
 	encodeParams+=( -hls_time "$hlsTime" )
 fi
 
+chown -R $(id -u bgcdn):$(id -g bgcdn) "$dir"
 
 docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault ffmpeg -hwaccel none \
 -progress /dev/stdout \
