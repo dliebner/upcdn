@@ -687,11 +687,11 @@ class TranscodingJob {
 
 		}
 
-		throw new GeneralExceptionWithData("Error starting job", debugEnabled() ? [
+		throw new GeneralExceptionWithData("Error starting job", [
 			'cmd' => $cmd,
 			'execResult' => $execResult,
 			'execOutput' => $execOutput
-		] : null);
+		]);
 
 	}
 

@@ -11,7 +11,7 @@ function default_exception_handler($e) {
 	
 	$eClass = get_class($e);
 	
-	if( in_array($eClass, array('QueryException','GeneralException','SilentAjaxException')) ) {
+	if( in_array($eClass, array('QueryException','GeneralException','SilentAjaxException','GeneralExceptionWithData')) ) {
 	
 		handleAjaxException($e);
 		
@@ -38,7 +38,7 @@ function handleAjaxException(Exception $e, $options = array()) {
 
 		case 'GeneralExceptionWithData':
 
-			AjaxResponse::returnError($e->getMessage(), $e->data, $options);
+			AjaxResponse::returnError($e->getMessage(), debugEnabled() ? $e->data : null, $options);
 			
 		case 'SilentAjaxException':
 
