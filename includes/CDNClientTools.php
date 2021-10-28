@@ -664,7 +664,7 @@ class TranscodingJob {
 		if( $this->jobSettings->mute ) $cmdOptions[] = "-m";
 
 		$cmd = escapeshellcmd(
-			"sudo /home/bgcdn/scripts/docker-ffmpeg.sh -d $dir -i $inFile -o $outFile -b $bitRate" . ($cmdOptions ? implode(" ", $cmdOptions) : "")
+			"sudo /home/bgcdn/scripts/docker-ffmpeg.sh -d $dir -i $inFile -o $outFile -b $bitRate" . ($cmdOptions ? " " . implode(" ", $cmdOptions) : "")
 		);
 
 		exec($cmd, $execOutput, $execResult);
