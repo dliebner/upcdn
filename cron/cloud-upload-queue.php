@@ -40,6 +40,19 @@ register_shutdown_function(function() {
 	
 });
 
+/** @var Client */
+$client = null;
+
+$getClient = function() use (&$client) {
+
+	$client = new Client(Config::get('b2_master_key_id'), [
+		'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
+		'applicationKey' => Config::get('b2_application_key'),
+	]);
+	$client->version = 2; // By default will use version 1
+
+};
+
 while( time() - $maxWaitTime < $start ) {
 
 	start_timer('cronLoop');
@@ -50,11 +63,7 @@ while( time() - $maxWaitTime < $start ) {
 		Config::set('cron_cloud_upload_start', time());
 		TranscodingJob::setCloudUploadStarted($tJobs);
 
-		$client = new Client(Config::get('b2_master_key_id'), [
-			'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
-			'applicationKey' => Config::get('b2_application_key'),
-		]);
-		$client->version = 2; // By default will use version 1
+		$getClient();
 
 		$bucketId = $client->getBucketFromName('bidglass-creatives')->getId();
 		$pup = new ParallelUploader($client, $bucketId);
