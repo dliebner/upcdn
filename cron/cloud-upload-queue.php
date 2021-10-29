@@ -77,7 +77,7 @@ while( time() - $maxWaitTime < $start ) {
 				'LocalFile' => $job->inProgressPath()
 			]);
 
-			//print_r($file); echo "\n";
+			print_r($file); echo "\n";
 
 		}
 
