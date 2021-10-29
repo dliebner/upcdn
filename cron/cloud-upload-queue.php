@@ -62,13 +62,11 @@ while( time() - $maxWaitTime < $start ) {
 
 		foreach( $tJobs as $job ) {
 
-			$pup->addFileToUpload($file = [
+			$pup->addFileToUpload([
 				'bgcdn:jobId' => $job->id,
 				'FileName' => $job->getCloudPath(),
 				'LocalFile' => $job->inProgressPath()
 			]);
-
-			print_r($file);
 
 		}
 
@@ -95,6 +93,10 @@ while( time() - $maxWaitTime < $start ) {
 			}, $failedFiles);
 
 			TranscodingJob::unsetCloudUploadStarted($jobIds);
+
+			echo "Failed files:\n";
+			print_r($failedFiles);
+			echo "\n";
 
 		}
 
