@@ -17,7 +17,7 @@ $start = time();
 set_time_limit(60 * 2);
 while( time() - 60 < $start ) {
 
-	// Redis: Get and delete curent bandwidth chunk bytes value
+	// Redis: Get and delete current 404 uris
 	$ret = $redis->multi()
 		->hGetAll('bgcdn:404_uris')
 		->del('bgcdn:404_uris')

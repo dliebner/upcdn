@@ -8,10 +8,10 @@ require_once( $root_path. 'common.php' );
 
 error_reporting(E_ALL);
 
-use obregonco\B2\Client;
-use obregonco\B2\Bucket;
-use obregonco\B2\ParallelUploader;
-use obregonco\B2\DirectoryUploader;
+use dliebner\B2\Client;
+use dliebner\B2\Bucket;
+use dliebner\B2\ParallelUploader;
+use dliebner\B2\DirectoryUploader;
 
 const B2_DEBUG_ON = true;
 
