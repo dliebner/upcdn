@@ -904,7 +904,7 @@ class TranscodingJob {
 
 	public function getCloudPath() {
 
-		return 'video_src/' . $this->getDirPrefix() . $this->srcFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
+		return 'video_src//' . $this->getDirPrefix() . $this->srcFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
 
 	}
 
