@@ -114,7 +114,7 @@ class CDNClient {
 
 	}
 
-	public static function createSourceVideo($meta, $sourceWidth, $sourceHeight, $sourceSizeBytes, $duration, $ffprobeResultJson, $sha1, &$hubResponseDataArray = null) {
+	public static function createSourceVideo($meta, $sourceExtension, $sourceWidth, $sourceHeight, $sourceSizeBytes, $duration, $ffprobeResultJson, $sha1, &$hubResponseDataArray = null) {
 
 		$success = false;
 
@@ -122,6 +122,7 @@ class CDNClient {
 
 		self::postToHub(self::HUB_ACTION_CREATE_SOURCE_VIDEO, [
 			'meta' => $meta,
+			'sourceExtension' => $sourceExtension,
 			'sourceWidth' => $sourceWidth,
 			'sourceHeight' => $sourceHeight,
 			'sourceSizeBytes' => $sourceSizeBytes,
@@ -266,6 +267,47 @@ class CDNTools {
 	public static function getProjectedMonthlyBandwidthUsedPct() {
 
 		return self::getMonthlyBandwidthUsedPct() / self::getPctMonthPassed();
+
+	}
+
+	/**
+	 * @param string $myDate
+	 * @return boolean|DateTime
+	 */
+	public static function dateTimeFromMysqlDate( $myDate ) {
+		
+		if( !$myDate ) return false;
+		
+		$dateTime = DateTime::createFromFormat('Y-m-d', $myDate);
+		$dateTime->modify('today'); // sets hour/min/sec to 0
+		
+		return $dateTime;
+
+	}
+
+	/**
+	 * @param string $myDateTime
+	 * @return boolean|DateTime
+	 */
+	public static function dateTimeFromMysqlDateTime( $myDateTime ) {
+		
+		if( !$myDateTime ) return false;
+		
+		return DateTime::createFromFormat('Y-m-d H:i:s', $myDateTime);
+
+	}
+
+	public static function intArray(array $numbers) {
+
+		$intified = [];
+
+		foreach( $numbers as $number ) {
+
+			$intified[] = (int)$number;
+
+		}
+
+		return $intified;
 
 	}
 	
@@ -555,6 +597,8 @@ class TranscodingJob {
 	public $id;
 	public $srcFilename;
 	public $srcIsNew;
+	public $srcExtension;
+	public $srcSizeBytes;
 	public $versionFilename;
 	public $jobSettings;
 	public $jobStarted;
@@ -567,12 +611,14 @@ class TranscodingJob {
 		$this->id = (int)$row['id'];
 		$this->srcFilename = $row['src_filename'];
 		$this->srcIsNew = (bool)$row['src_is_new'];
+		$this->srcExtension = $row['src_extension'] ?: null;
+		$this->srcSizeBytes = (int)$row['src_size_bytes'];
 		$this->versionFilename = $row['version_filename'];
 		$this->jobSettings = TranscodingJobSettings::fromJson($row['job_settings']);
-		$this->jobStarted = (bool)$row['job_started'];
+		$this->jobStarted = $row['job_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_started']) : null;
 		$this->dockerContainerId = $row['docker_container_id'] ?: null;
-		$this->cloudUploadStarted = isset($row['cloud_upload_started']) ? (bool)$row['cloud_upload_started'] : null;
-		$this->transcodeStarted = (bool)$row['transcode_started'];
+		$this->cloudUploadStarted = $row['cloud_upload_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['cloud_upload_started']) : null;
+		$this->transcodeStarted = $row['transcode_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['transcode_started']) : null;
 		
 	}
 
@@ -709,18 +755,22 @@ class TranscodingJob {
 
 	}
 
-	public static function create($srcFilename, $srcIsNew, $versionFilename, TranscodingJobSettings $jobSettings) {
+	public static function create($srcFilename, $srcIsNew, $srcExtension, $srcSizeBytes, $versionFilename, TranscodingJobSettings $jobSettings) {
 
 		$db = db();
 
 		$sql = "INSERT INTO transcoding_jobs (
 			src_filename,
 			src_is_new,
+			src_extension,
+			src_size_bytes,
 			version_filename,
 			job_settings
 		) VALUES (
 			'" . original_to_query($srcFilename) . "',
 			" . (int)$srcIsNew . ",
+			" . ($srcExtension ? "'" . original_to_query($srcExtension) . "'" : "NULL") . ",
+			" . (int)$srcSizeBytes . ",
 			'" . original_to_query($versionFilename) . "',
 			'" . original_to_query(json_encode($jobSettings)) . "'
 		)";
@@ -730,6 +780,139 @@ class TranscodingJob {
 		$insertId = $db->sql_nextid();
 
 		return self::getById($insertId);
+
+	}
+
+	const CLOUD_UPLOAD_MAX_BATCH_SIZE = 100*1000*1000; // 100mb
+	const CLOUD_UPLOAD_MAX_BATCH_UPLOADS = 100;
+	const CLOUD_UPLOAD_MAX_CONCURRENT = 10;
+
+	public static function getCloudUploadJobs() {
+
+		/**
+		 * Cloud upload architecture:
+		 * 	Get up to 100mb worth of jobs
+		 *  Up to 100 uploads
+		 *  Max concurrency of 10
+		 */
+		$db = db();
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE src_is_new = 1
+			AND cloud_upload_started IS NULL
+			LIMIT " . self::CLOUD_UPLOAD_MAX_BATCH_UPLOADS;
+
+		if( !$result = $db->sql_query($sql) ) {
+
+			throw new QueryException("Error selecting", $sql);
+
+		}
+
+		$totalBytes = 0;
+
+		$tJobs = [];
+		while( $row = $db->sql_fetchrow($result) ) {
+
+			$tJobs[] = $job = new self($row);
+
+			$totalBytes += $job->srcSizeBytes;
+
+			if( $totalBytes > self::CLOUD_UPLOAD_MAX_BATCH_SIZE ) break;
+			
+		}
+		$db->sql_freeresult($result);
+		
+		return $tJobs;
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function setCloudUploadStarted( array $tJobs ) {
+
+		if( !$tJobs ) return;
+
+		$db = db();
+
+		$jobIds = self::getJobIds($tJobs);
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_upload_started = NOW()
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function unsetCloudUploadStarted( array $jobIds ) {
+
+		if( !$jobIds ) return;
+
+		$db = db();
+
+		$jobIds = CDNTools::intArray($jobIds);
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_upload_started = NULL
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function setCloudUploadFinished( array $jobIds ) {
+
+		if( !$jobIds ) return;
+
+		$db = db();
+
+		$jobIds = CDNTools::intArray($jobIds);
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_upload_finished = NOW()
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
+	public function getDirPrefix() {
+
+		return $this->srcFilename[0] . '/' . $this->srcFilename[1] . '/' . $this->srcFilename[2] . '/';
+
+	}
+
+	public function getCloudPath() {
+
+		return 'video_src/' . $this->getDirPrefix() . $this->srcFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function getJobIds( array $tJobs ) {
+
+		$jobIds = [];
+		foreach( $tJobs as $job ) {
+
+			$jobIds[] = (int)$job->id;
+
+		}
+
+		return $jobIds;
 
 	}
 

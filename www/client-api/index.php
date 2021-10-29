@@ -150,7 +150,8 @@ switch( $action ) {
 		$maxSizeBytes = $responseData['maxSizeBytes'];
 		$maxDuration = $responseData['maxDuration'];
 
-		//$originalFilename = $_FILES['image']['name'];
+		$originalFilename = $_FILES['image']['name'];
+		$originalExtension = pathinfo($originalFilename, PATHINFO_EXTENSION) ?: null;
 		$tmpFile = $_FILES['image']['tmp_name'];
 
 		if( !is_uploaded_file($tmpFile) ) {
@@ -254,7 +255,7 @@ switch( $action ) {
 				 * 	- version_filename?
 				 */
 
-				if( !CDNClient::createSourceVideo($meta, $sourceWidth, $sourceHeight, $fileSizeBytes, $duration, $ffprobeResult, $sha1, $hubResponseDataArray) ) {
+				if( !CDNClient::createSourceVideo($meta, $originalExtension, $sourceWidth, $sourceHeight, $fileSizeBytes, $duration, $ffprobeResult, $sha1, $hubResponseDataArray) ) {
 
 					AjaxResponse::returnError("Error saving source video.");
 
@@ -265,7 +266,7 @@ switch( $action ) {
 				$versionFilename = $hubResponseDataArray['versionFilename'];
 
 				// Start new job
-				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $versionFilename, new TranscodingJobSettings(
+				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $versionFilename, new TranscodingJobSettings(
 					$targetBitRate,
 					$constrainWidth,
 					$constrainHeight,

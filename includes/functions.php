@@ -497,7 +497,7 @@ class Config {
 	
 	protected static $data;
 	
-	protected static function loadConfig($forceRefresh = false) {
+	public static function loadConfig($forceRefresh = false) {
 		
 		if( $forceRefresh || !isset(self::$data) ) {
 
@@ -517,6 +517,8 @@ class Config {
 				self::$data[$row['property']] = $row['value'];
 				
 			}
+
+			return true;
 
 		}
 		

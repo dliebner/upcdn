@@ -109,7 +109,9 @@ sudo useradd -m -s /bin/bash bgcdn
 # install composer extensions
 composer require gabrielelana/byte-units
 composer require guzzlehttp/guzzle:^7
-composer require obregonco/backblaze-b2
+#composer require obregonco/backblaze-b2
+composer config repositories.backblaze-b2 vcs https://github.com/dliebner/backblaze-b2
+composer require dliebner/backblaze-b2:dev-master
 
 # copy files
 sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
