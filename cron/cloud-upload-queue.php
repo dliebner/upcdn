@@ -71,11 +71,13 @@ while( time() - $maxWaitTime < $start ) {
 
 		foreach( $tJobs as $job ) {
 
-			$pup->addFileToUpload([
+			$pup->addFileToUpload($file = [
 				'bgcdn:jobId' => $job->id,
 				'FileName' => $job->getCloudPath(),
 				'LocalFile' => $job->inProgressPath()
 			]);
+
+			print_r($file); echo "\n";
 
 		}
 
