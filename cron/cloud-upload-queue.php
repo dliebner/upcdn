@@ -40,6 +40,8 @@ register_shutdown_function(function() {
 	
 });
 
+const B2_DEBUG_ON = true;
+
 /** @var Client */
 $client = null;
 
@@ -77,7 +79,7 @@ while( time() - $maxWaitTime < $start ) {
 				'LocalFile' => $job->inProgressPath()
 			]);
 
-			print_r($file); echo "\n";
+			//print_r($file); echo "\n";
 
 		}
 
