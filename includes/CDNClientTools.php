@@ -892,7 +892,13 @@ class TranscodingJob {
 
 	public function getDirPrefix() {
 
-		return $this->srcFilename[0] . '/' . $this->srcFilename[1] . '/' . $this->srcFilename[2] . '/';
+		$clean = array_filter(str_split($this->srcFilename), function($char) {
+
+			return $char != '-';
+
+		});
+
+		return $clean[0] . '/' . $clean[1] . '/' . $clean[2] . '/';
 
 	}
 
