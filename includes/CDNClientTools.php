@@ -967,6 +967,10 @@ class TranscodingJob {
 
 			}
 
+		} else {
+
+			var_dump($execResult);
+
 		}
 
 	}
