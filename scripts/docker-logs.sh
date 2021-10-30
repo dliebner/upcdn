@@ -10,7 +10,7 @@ done
 
 optionalParams=()
 
-if [ ! -z "$containerId" ]; then
+if [ -z "$containerId" ]; then
     echo "Missing container ID -c"
     exit 1
 fi
