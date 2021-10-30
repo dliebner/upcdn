@@ -177,7 +177,7 @@ switch( $action ) {
 
 		exec($cmd, $execOutput, $execResult);
 
-		if( $execResult === 0 || $execResult === 1 ) {
+		if( $execResult === 0 ) {
 
 			if( $ffprobeResult = json_decode(implode(PHP_EOL, $execOutput), true) ) {
 
@@ -266,7 +266,7 @@ switch( $action ) {
 				$versionFilename = $hubResponseDataArray['versionFilename'];
 
 				// Start new job
-				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $versionFilename, new TranscodingJobSettings(
+				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, new TranscodingJobSettings(
 					$targetBitRate,
 					$constrainWidth,
 					$constrainHeight,

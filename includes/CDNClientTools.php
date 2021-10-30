@@ -698,25 +698,32 @@ class TranscodingJob {
 			
 		}
 
-		// Optional
-		$cmdOptions = [];
+		// Escaped args
+		$escapedArgs = [
+			'-d ' . escapeshellarg($dir),
+			'-i ' . escapeshellarg($inFile),
+			'-o ' . escapeshellarg($outFile),
+			'-b ' . escapeshellarg($bitRate),
+		];
 
+		// Optional args
 		if( ($constrainWidth = $this->jobSettings->constrainWidth) && ($constrainHeight = $this->jobSettings->constrainHeight) ) {
 
-			$cmdOptions[] = "-w $constrainWidth -h $constrainHeight";
+			$escapedArgs[] = '-w ' . escapeshellarg($constrainWidth);
+			$escapedArgs[] = '-h ' . escapeshellarg($constrainHeight);
 
 		}
 
-		if( $this->jobSettings->saveAsHls ) $cmdOptions[] = "-s";
-		if( $this->jobSettings->mute ) $cmdOptions[] = "-m";
+		if( $this->jobSettings->saveAsHls ) $escapedArgs[] = "-s";
+		if( $this->jobSettings->mute ) $escapedArgs[] = "-m";
 
 		$cmd = escapeshellcmd(
-			"sudo /home/bgcdn/scripts/docker-ffmpeg.sh -d $dir -i $inFile -o $outFile -b $bitRate" . ($cmdOptions ? " " . implode(" ", $cmdOptions) : "")
+			"sudo /home/bgcdn/scripts/docker-ffmpeg.sh " . implode(" ", $escapedArgs)
 		);
 
 		exec($cmd, $execOutput, $execResult);
 
-		if( $execResult === 0 || $execResult === 1 ) {
+		if( $execResult === 0 ) {
 
 			if( count($execOutput) > 1 ) {
 
@@ -755,7 +762,7 @@ class TranscodingJob {
 
 	}
 
-	public static function create($srcFilename, $srcIsNew, $srcExtension, $srcSizeBytes, $versionFilename, TranscodingJobSettings $jobSettings) {
+	public static function create($srcFilename, $srcIsNew, $srcExtension, $srcSizeBytes, $srcDuration, $versionFilename, TranscodingJobSettings $jobSettings) {
 
 		$db = db();
 
@@ -764,6 +771,7 @@ class TranscodingJob {
 			src_is_new,
 			src_extension,
 			src_size_bytes,
+			src_duration,
 			version_filename,
 			job_settings
 		) VALUES (
@@ -771,6 +779,7 @@ class TranscodingJob {
 			" . (int)$srcIsNew . ",
 			" . ($srcExtension ? "'" . original_to_query($srcExtension) . "'" : "NULL") . ",
 			" . (int)$srcSizeBytes . ",
+			'" . original_to_query($srcDuration) . "',
 			'" . original_to_query($versionFilename) . "',
 			'" . original_to_query(json_encode($jobSettings)) . "'
 		)";
@@ -919,6 +928,33 @@ class TranscodingJob {
 		}
 
 		return $jobIds;
+
+	}
+
+	public function getPercentComplete() {
+
+		$containerId = escapeshellarg($this->dockerContainerId);
+
+		$cmd = escapeshellcmd(
+			"sudo /home/bgcdn/scripts/docker-logs.sh -c " . escapeshellarg($containerId) . " -n 70"
+		);
+
+		exec($cmd, $execOutput, $execResult);
+
+		if( $execResult === 0 ) {
+
+			$execOutput = implode(PHP_EOL, $execOutput);
+
+			// Finished?
+			if( preg_match('/^progress=end/im', $execOutput) ) {
+
+				return 1;
+
+			}
+
+			// fuck TODO: compare out_time to duration
+
+		}
 
 	}
 
