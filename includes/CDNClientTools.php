@@ -599,6 +599,7 @@ class TranscodingJob {
 	public $srcIsNew;
 	public $srcExtension;
 	public $srcSizeBytes;
+	public $srcDuration;
 	public $versionFilename;
 	public $jobSettings;
 	public $jobStarted;
@@ -613,6 +614,7 @@ class TranscodingJob {
 		$this->srcIsNew = (bool)$row['src_is_new'];
 		$this->srcExtension = $row['src_extension'] ?: null;
 		$this->srcSizeBytes = (int)$row['src_size_bytes'];
+		$this->srcDuration = (float)$row['src_duration'];
 		$this->versionFilename = $row['version_filename'];
 		$this->jobSettings = TranscodingJobSettings::fromJson($row['job_settings']);
 		$this->jobStarted = $row['job_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_started']) : null;
@@ -952,7 +954,18 @@ class TranscodingJob {
 
 			}
 
-			// fuck TODO: compare out_time to duration
+			if( preg_match_all('/^out_time_us=(\d+)/', $execOutput, $matches) ) {
+
+				if( $lastOutTimeUs = array_pop($matches[1]) ) {
+
+					$curOutTimeS = $lastOutTimeUs / 1000000;
+					$progress = $curOutTimeS / $this->srcDuration;
+
+					return $progress;
+
+				}
+
+			}
 
 		}
 
