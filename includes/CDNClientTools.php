@@ -933,7 +933,7 @@ class TranscodingJob {
 
 	}
 
-	public function getPercentComplete() {
+	public function getPercentComplete(&$isFinished = false) {
 
 		$containerId = escapeshellarg($this->dockerContainerId);
 
@@ -949,6 +949,8 @@ class TranscodingJob {
 
 			// Finished?
 			if( preg_match('/^progress=end/im', $execOutput) ) {
+
+				$isFinished = true;
 
 				return 1;
 
@@ -966,14 +968,6 @@ class TranscodingJob {
 				}
 
 			}
-
-		} else {
-
-			print_r([
-				'cmd' => $cmd,
-				'execResult' => $execResult,
-				'execOutput' => $execOutput,
-			]);
 
 		}
 
