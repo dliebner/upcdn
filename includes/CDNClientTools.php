@@ -938,7 +938,7 @@ class TranscodingJob {
 		$containerId = escapeshellarg($this->dockerContainerId);
 
 		$cmd = escapeshellcmd(
-			"sudo /home/bgcdn/scripts/docker-logs.sh -c " . escapeshellarg($containerId) . " -n 70"
+			"sudo /home/bgcdn/scripts/docker-logs.sh -c $containerId -n 70"
 		);
 
 		exec($cmd, $execOutput, $execResult);
