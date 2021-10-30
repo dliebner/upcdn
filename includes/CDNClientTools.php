@@ -969,7 +969,11 @@ class TranscodingJob {
 
 		} else {
 
-			var_dump($execResult);
+			print_r([
+				'cmd' => $cmd,
+				'execResult' => $execResult,
+				'execOutput' => $execOutput,
+			]);
 
 		}
 
