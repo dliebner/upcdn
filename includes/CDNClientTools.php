@@ -660,6 +660,28 @@ class TranscodingJob {
 
 	}
 
+	public static function getByContainerId($dockerContainerId) {
+
+		$db = db();
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE docker_container_id = '" . original_to_query($dockerContainerId) . "'";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		if( $row = $db->sql_fetchrow($result) ) {
+
+			return new self($row);
+
+		} else {
+
+			return false;
+
+		}
+
+	}
+
 	public function moveUploadedFile($tmpFile) {
 
 		$dir = $this->inProgressDir();
@@ -748,6 +770,18 @@ class TranscodingJob {
 			'execResult' => $execResult,
 			'execOutput' => $execOutput
 		]);
+
+	}
+
+	public function finishTranscode() {
+
+		$sql = "UPDATE transcoding_jobs
+			SET transcode_finished = NOW()
+			WHERE id=" . (int)$this->id;
+
+		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+		// fuck TODO: move finished file(s) to www, upload finished file(s) to cloud
 
 	}
 
