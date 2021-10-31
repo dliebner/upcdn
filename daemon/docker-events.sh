@@ -1,6 +1,6 @@
 #!/bin/sh 
 
-docker events --filter 'type=container' --filter 'event=start' --filter 'event=stop' | while read event
+docker events --filter 'type=container' | while read event
 
 do
   
