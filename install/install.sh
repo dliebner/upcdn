@@ -10,6 +10,7 @@ if( !defined('IN_SCRIPT') ) die( \"Hacking attempt\" );\
 # chmod files
 chmod +x install-composer.sh
 chmod +x ../scripts/*
+chmod +x ../daemon/*
 chmod +x ../cron/*.sh
 
 # general dependencies
@@ -118,6 +119,7 @@ sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
 sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
 sudo cp bgcdn-sudoers /etc/sudoers.d/
 sudo cp bgcdn-cron /etc/cron.d/
+sudo cp bgcdn-docker-events.service /etc/systemd/system/
 
 # replace occurences of BGCDN_HOSTNAME in conf files
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
@@ -134,3 +136,7 @@ chown -R bgcdn:bgcdn /home/bgcdn/
 # restart apache
 sudo service apache2 restart
 sudo service php7.4-fpm restart
+
+# start custom daemons
+sudo systemctl enable bgcdn-docker-events.service
+sudo systemctl start bgcdn-docker-events.service
