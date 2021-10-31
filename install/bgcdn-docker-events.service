@@ -2,7 +2,7 @@
 Description=BGCDN Docker Event handler
 
 [Service]
-ExecStart=/home/bgcdn/scripts/docker-logs.sh
+ExecStart=/home/bgcdn/daemon/docker-events.sh
 Restart=on-failure
 
 [Install]
