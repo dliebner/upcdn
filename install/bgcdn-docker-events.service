@@ -1,0 +1,9 @@
+[Unit]
+Description=BGCDN Docker Event handler
+
+[Service]
+ExecStart=/home/bgcdn/scripts/docker-logs.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
