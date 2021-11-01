@@ -794,6 +794,24 @@ class TranscodingJob {
 
 	}
 
+	public function hlsRelativeDir() {
+
+		return $this->versionFilename . '/';
+
+	}
+
+	public function hlsWWWDirPath() {
+
+		return $this->wwwDir() . $this->hlsRelativeDir();
+
+	}
+
+	public function hlsZipPath() {
+
+		return $this->hlsWWWDirPath() . $this->versionFilename . '.zip';
+
+	}
+
 	public function finishTranscode() {
 
 		$transcodeOutDir = $this->inProgressDir() . CDNClient::DIR_TRANSCODE_OUTPUT;
@@ -807,6 +825,8 @@ class TranscodingJob {
 			new RecursiveDirectoryIterator($basePath),
 			RecursiveIteratorIterator::LEAVES_ONLY
 		);
+
+		$filesMoved = 0;
 
 		foreach( $files as $file ) {
 
@@ -829,7 +849,44 @@ class TranscodingJob {
 				// Move files
 				rename($filePath, $wwwDir . $relativePath);
 
+				$filesMoved++;
+
 			}
+
+		}
+
+		if( $this->isHls() ) {
+
+			// Prepare zipped files for cloud upload
+
+			// Get real path for our folder
+			$basePath = realpath($this->hlsWWWDirPath());
+
+			// Initialize archive object
+			$zip = new ZipArchive();
+			$zip->open($this->hlsZipPath(), ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+			// Create recursive directory iterator
+			/** @var SplFileInfo[] $files */
+			$files = new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator($basePath),
+				RecursiveIteratorIterator::LEAVES_ONLY
+			);
+
+			foreach ($files as $file) {
+				// Skip directories (they would be added automatically)
+				if (!$file->isDir()) {
+					// Get real and relative path for current file
+					$filePath = $file->getRealPath();
+					$relativePath = substr($filePath, strlen($basePath) + 1);
+
+					// Add current file to archive
+					$zip->addFile($filePath, $relativePath);
+				}
+			}
+
+			// Zip archive will be created only after closing object
+			$zip->close();
 
 		}
 
