@@ -769,6 +769,8 @@ class TranscodingJob {
 			"sudo /home/bgcdn/scripts/docker-ffmpeg.sh " . implode(" ", $escapedArgs)
 		);
 
+		die($cmd);
+
 		exec($cmd, $execOutput, $execResult);
 
 		if( $execResult === 0 ) {
