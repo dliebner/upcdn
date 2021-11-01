@@ -735,7 +735,7 @@ class TranscodingJob {
 		$bitRate = $this->jobSettings->bitRate;
 
 		// Create output dir if it doesn't exist
-		$outDir = $dir . CDNClient::DIR_TRANSCODE_OUTPUT;
+		$outDir = $dir . CDNClient::DIR_TRANSCODE_OUTPUT . ($this->jobSettings->saveAsHls ? $this->versionFilename . '/': '');
 		if( !is_dir($outDir) ) {
 	
 			if( !mkdir_recursive($outDir, 0775)) {
@@ -768,8 +768,6 @@ class TranscodingJob {
 		$cmd = escapeshellcmd(
 			"sudo /home/bgcdn/scripts/docker-ffmpeg.sh " . implode(" ", $escapedArgs)
 		);
-
-		die($cmd);
 
 		exec($cmd, $execOutput, $execResult);
 

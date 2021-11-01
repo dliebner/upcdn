@@ -115,6 +115,12 @@ $action = postdata_to_original($_POST['action']);
 
 switch( $action ) {
 
+	case 'upload-progress':
+
+		// fuck TODO:
+
+		break;
+
 	case 'upload-video':
 
 		/**
@@ -214,12 +220,12 @@ switch( $action ) {
 
 					// Uploaded video is "wider" (proportionally) than the target dimensions
 					$constrainWidth = $targetWidth;
-					$constrainHeight = -1;
+					$constrainHeight = -2;
 
 				} else {
 
 					// Uploaded video is "taller" (proportionally) than the target dimensions
-					$constrainWidth = -1;
+					$constrainWidth = -2;
 					$constrainHeight = $targetHeight;
 
 				}
