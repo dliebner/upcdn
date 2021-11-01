@@ -219,14 +219,14 @@ switch( $action ) {
 				if( $uploadedAspectRatio > $targetAspectRatio ) {
 
 					// Uploaded video is "wider" (proportionally) than the target dimensions
-					$constrainWidth = $targetWidth;
+					$constrainWidth = $targetWidth * 2; // 2x resolution
 					$constrainHeight = -2;
 
 				} else {
 
 					// Uploaded video is "taller" (proportionally) than the target dimensions
 					$constrainWidth = -2;
-					$constrainHeight = $targetHeight;
+					$constrainHeight = $targetHeight * 2; // 2x resolution
 
 				}
 				
