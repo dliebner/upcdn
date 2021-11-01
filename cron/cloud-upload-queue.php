@@ -63,7 +63,9 @@ while( time() - $maxWaitTime < $start ) {
 	if( $tJobs = TranscodingJob::getCloudUploadJobs() ) {
 
 		Config::set('cron_cloud_upload_start', time());
-		TranscodingJob::setCloudUploadStarted($tJobs);
+
+		$srcCloudUploads = [];
+		$versionCloudUploads = [];
 
 		$getClient();
 
@@ -73,13 +75,45 @@ while( time() - $maxWaitTime < $start ) {
 
 		foreach( $tJobs as $job ) {
 
-			$pup->addFileToUpload($file = [
-				'bgcdn:jobId' => $job->id,
-				'FileName' => $job->getCloudPath(),
-				'LocalFile' => $job->inProgressPath()
-			]);
+			if( $job->srcIsNew && !$job->data['src_cloud_upload_started'] ) {
 
-			//print_r($file); echo "\n";
+				$srcCloudUploads[] = $job;
+
+				$pup->addFileToUpload($file = [
+					'bgcdn:jobId' => $job->id,
+					'bgcdn:type' => 'src',
+					'FileName' => $job->getSrcCloudPath(),
+					'LocalFile' => $job->inProgressPath()
+				]);
+
+				//print_r($file); echo "\n";
+
+			} else if( !$job->data['cloud_upload_started'] ) {
+
+				$versionCloudUploads[] = $job;
+
+				if( $job->isHls() ) {
+
+					// Dir containing index.m3u8 and ts files
+					$localDir = $job->wwwDir() . $job->versionFilename . '/';
+
+				} else {
+
+					// mp4 file
+					$localFile = $job->wwwDir() . $job->versionFilename . '.mp4';
+
+				}
+
+				$pup->addFileToUpload($file = [
+					'bgcdn:jobId' => $job->id,
+					'bgcdn:type' => 'version',
+					'FileName' => $job->getCloudPath(),
+					'LocalFile' => $localFile // TODO
+				]);
+
+				//print_r($file); echo "\n";
+
+			}
 
 		}
 
@@ -87,25 +121,41 @@ while( time() - $maxWaitTime < $start ) {
 
 		if( $uploadedFiles = $pup->getAllUploadedFiles() ) {
 
-			$jobIds = array_map(function(AsyncUploadFileResult $uploadedFileResult) {
+			$finishedSrcCloudUploadJobIds = [];
+			$finishedCloudUploadJobIds = [];
 
-				return $uploadedFileResult->originalFile['bgcdn:jobId'];
+			foreach( $uploadedFiles as $uploadedFileResult ) {
 
-			}, $uploadedFiles);
+				$type = $uploadedFileResult->originalFile['bgcdn:type'];
+				$jobId = $uploadedFileResult->originalFile['bgcdn:jobId'];
 
-			TranscodingJob::setCloudUploadFinished($jobIds);
+				if( $type === 'src' ) $finishedSrcCloudUploadJobIds[] = $jobId;
+				if( $type === 'version' ) $finishedCloudUploadJobIds[] = $jobId;
+
+			}
+
+			TranscodingJob::setSrcCloudUploadFinished($finishedSrcCloudUploadJobIds);
+			TranscodingJob::setCloudUploadFinished($finishedCloudUploadJobIds);
 
 		}
 
 		if( $failedFiles = $pup->getAllFailedFiles() ) {
 
-			$jobIds = array_map(function($fileObj) {
+			$failedSrcCloudUploadJobIds = [];
+			$failedCloudUploadJobIds = [];
 
-				return $fileObj['bgcdn:jobId'];
+			foreach( $uploadedFiles as $uploadedFileResult ) {
 
-			}, $failedFiles);
+				$type = $uploadedFileResult->originalFile['bgcdn:type'];
+				$jobId = $uploadedFileResult->originalFile['bgcdn:jobId'];
 
-			TranscodingJob::unsetCloudUploadStarted($jobIds);
+				if( $type === 'src' ) $failedSrcCloudUploadJobIds[] = $jobId;
+				if( $type === 'version' ) $failedCloudUploadJobIds[] = $jobId;
+
+			}
+
+			TranscodingJob::unsetSrcCloudUploadStarted($finishedSrcCloudUploadJobIds);
+			TranscodingJob::unsetCloudUploadStarted($finishedCloudUploadJobIds);
 
 			echo "Failed files:\n";
 			print_r($failedFiles);

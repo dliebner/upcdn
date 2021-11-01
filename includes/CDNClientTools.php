@@ -608,6 +608,8 @@ class TranscodingJob {
 	public $cloudUploadStarted;
 	public $transcodeStarted;
 
+	public $data;
+
 	public function __construct($row) {
 
 		$this->id = (int)$row['id'];
@@ -622,6 +624,8 @@ class TranscodingJob {
 		$this->dockerContainerId = $row['docker_container_id'] ?: null;
 		$this->cloudUploadStarted = $row['cloud_upload_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['cloud_upload_started']) : null;
 		$this->transcodeStarted = $row['transcode_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['transcode_started']) : null;
+
+		$this->data = $row;
 		
 	}
 
@@ -784,39 +788,56 @@ class TranscodingJob {
 
 	}
 
+	public function isHls() {
+
+		return (bool)$this->jobSettings->saveAsHls;
+
+	}
+
 	public function finishTranscode() {
+
+		$transcodeOutDir = $this->inProgressDir() . CDNClient::DIR_TRANSCODE_OUTPUT;
+		$wwwDir = $this->wwwDir();
+
+		// Move contents of transcode out dir to www dir
+		$basePath = realpath($transcodeOutDir);
+
+		/** @var SplFileInfo[] $files */
+		$files = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($basePath),
+			RecursiveIteratorIterator::LEAVES_ONLY
+		);
+
+		foreach( $files as $filename => $file ) {
+
+			$filePath = $file->getRealPath();
+			$relativePath = substr($filePath, strlen($basePath) + 1);
+
+			if( $file->isDir() ) {
+
+				$dirName = $wwwDir . $relativePath;
+
+				// Create missing path directories
+				if( !file_exists($dirName) && !mkdir_recursive($dirName, 0775)) {
+					
+					throw new Exception("Could not create $dirName dir.");
+					
+				}
+
+			} else {
+
+				// Move files
+				rename($transcodeOutDir . $filename, $wwwDir . $filename);
+
+			}
+
+		}
 
 		$sql = "UPDATE transcoding_jobs
 			SET transcode_finished = NOW()
 			WHERE id=" . (int)$this->id;
 
 		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
-
-		$transcodeOutDir = $this->inProgressDir() . CDNClient::DIR_TRANSCODE_OUTPUT;
-		$wwwDir = $this->wwwDir();
-
-		if( !is_dir($wwwDir) ) {
-	
-			if( !mkdir_recursive($wwwDir, 0775)) {
-				
-				throw new Exception("Could not create www dir.");
-				
-			}
-			
-		}
-
-		$files = scandir($transcodeOutDir);
-		foreach( $files as $file ) {
-
-			if( $file != '.' && $file != '..' ) {
-
-				rename($transcodeOutDir . $file, $wwwDir . $file);
-
-			} 
-
-		}
-
-		// fuck TODO: upload finished file(s) to cloud
 
 	}
 
@@ -929,7 +950,7 @@ class TranscodingJob {
 	}
 
 	/** @param TranscodingJob[] $tJobs */
-	public static function unsetCloudUploadStarted( array $jobIds ) {
+	public static function setSrcCloudUploadFinished( array $jobIds ) {
 
 		if( !$jobIds ) return;
 
@@ -938,7 +959,28 @@ class TranscodingJob {
 		$jobIds = CDNTools::intArray($jobIds);
 
 		$sql = "UPDATE transcoding_jobs
-			SET cloud_upload_started = NULL
+			SET src_cloud_upload_finished = NOW()
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function unsetSrcCloudUploadStarted( array $jobIds ) {
+
+		if( !$jobIds ) return;
+
+		$db = db();
+
+		$jobIds = CDNTools::intArray($jobIds);
+
+		$sql = "UPDATE transcoding_jobs
+			SET src_cloud_upload_started = NULL
 			WHERE id IN (" . implode(",", $jobIds) . ")";
 
 		if( !$db->sql_query($sql) ) {
@@ -970,6 +1012,27 @@ class TranscodingJob {
 
 	}
 
+	/** @param TranscodingJob[] $tJobs */
+	public static function unsetCloudUploadStarted( array $jobIds ) {
+
+		if( !$jobIds ) return;
+
+		$db = db();
+
+		$jobIds = CDNTools::intArray($jobIds);
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_upload_started = NULL
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
 	public function getDirPrefix() {
 
 		$clean = array_values(array_filter(str_split($this->srcFilename), function($char) {
@@ -982,9 +1045,15 @@ class TranscodingJob {
 
 	}
 
-	public function getCloudPath() {
+	public function getSrcCloudPath() {
 
 		return 'video_src/' . $this->getDirPrefix() . $this->srcFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
+
+	}
+
+	public function getCloudPath() {
+
+		return 'video_versions/' . $this->getDirPrefix() . $this->versionFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
 
 	}
 
