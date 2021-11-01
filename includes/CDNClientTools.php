@@ -453,6 +453,7 @@ class FFProbeResult_VideoStream extends FFProbeResult_Stream {
 
 		$this->sampleAspectRatioString = $sar = $obj['sample_aspect_ratio'];
 		$sarParts = explode(':', $sar);
+		if( !$sarParts[1] ) throw new GeneralExceptionWithData("Mising sample aspect ratio denominator", $obj);
 		$this->sampleAspectRatioFloat = $sarParts[0] / $sarParts[1];
 
 		$this->displayAspectRatioString = $dar = $obj['display_aspect_ratio'];
