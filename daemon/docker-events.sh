@@ -7,7 +7,7 @@ do
 	container_id=$(echo $event | sed -r -n 's/.* container die ([a-zA-Z0-9]+) .*/\1/p')
 
 	if [ ! -z "$container_id" ]; then
-		php /home/bgcdn/scripts/docker-container-die.php "$container_id"
+		sudo -u bgcdn php /home/bgcdn/scripts/docker-container-die.php "$container_id"
 	fi
 
 done
