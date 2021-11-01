@@ -6,6 +6,7 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
+/** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
 	new RecursiveDirectoryIterator(realpath($root_path . 'www/v/m/C/D/')),
 	RecursiveIteratorIterator::LEAVES_ONLY
@@ -19,6 +20,6 @@ foreach( $files as $filename => $file ) {
 
 	}
 
-	echo $filename . "\n";
+	echo "$filename vs " . $file->getPath() . " vs " . $file->getBasename() . " vs " . $file->getFilename() . "\n";
 
 }
