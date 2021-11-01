@@ -8,7 +8,7 @@ require_once( $root_path. 'common.php' );
 
 /** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
-	new RecursiveDirectoryIterator(realpath($root_path . 'www/v/m/C/D/')),
+	new RecursiveDirectoryIterator(realpath($root_path . 'www/v/')),
 	RecursiveIteratorIterator::LEAVES_ONLY
 );
 
