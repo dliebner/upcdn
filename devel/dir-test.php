@@ -6,9 +6,11 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
+$basePath = realpath($root_path . 'www/v/');
+
 /** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
-	new RecursiveDirectoryIterator(realpath($root_path . 'www/v/')),
+	new RecursiveDirectoryIterator($basePath),
 	RecursiveIteratorIterator::LEAVES_ONLY
 );
 
@@ -20,6 +22,10 @@ foreach( $files as $filename => $file ) {
 
 	}
 
-	echo "$filename vs " . $file->getPath() . " vs " . $file->getBasename() . " vs " . $file->getFilename() . "\n";
+	// Get real and relative path for current file
+	$filePath = $file->getRealPath();
+	$relativePath = substr($filePath, strlen($basePath) + 1);
+
+	echo "$filename vs $relativePath vs " . $file->getPath() . " vs " . $file->getBasename() . " vs " . $file->getFilename() . "\n";
 
 }
