@@ -16,6 +16,7 @@ class CDNClient {
 	const DIR_TRANSCODE_IN_PROGRESS = 'transcoding/';
 	const DIR_TRANSCODE_OUTPUT = 'out/';
 	const DIR_WWW = 'www/';
+	const DIR_VIDEO = 'v/';
 
 	const HUB_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
 	const HUB_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
@@ -638,6 +639,14 @@ class TranscodingJob {
 
 	}
 
+	public function wwwDir() {
+
+		global $root_path;
+
+		return $root_path . CDNClient::DIR_WWW . CDNClient::DIR_VIDEO . $this->getDirPrefix();
+
+	}
+
 	public static function getById($id) {
 
 		$db = db();
@@ -694,6 +703,8 @@ class TranscodingJob {
 			}
 			
 		}
+
+		if( file_exists($this->inProgressPath()) ) return true;
 
 		return move_uploaded_file($tmpFile, $this->inProgressPath());
 
@@ -781,7 +792,31 @@ class TranscodingJob {
 
 		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
 
-		// fuck TODO: move finished file(s) to www, upload finished file(s) to cloud
+		$transcodeOutDir = $this->inProgressDir() . CDNClient::DIR_TRANSCODE_OUTPUT;
+		$wwwDir = $this->wwwDir();
+
+		if( !is_dir($wwwDir) ) {
+	
+			if( !mkdir_recursive($wwwDir, 0775)) {
+				
+				throw new Exception("Could not create www dir.");
+				
+			}
+			
+		}
+
+		$files = scandir($transcodeOutDir);
+		foreach( $files as $file ) {
+
+			if( $file != '.' && $file != '..' ) {
+
+				rename($transcodeOutDir . $file, $wwwDir . $file);
+
+			} 
+
+		}
+
+		// fuck TODO: upload finished file(s) to cloud
 
 	}
 
