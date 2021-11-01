@@ -448,17 +448,25 @@ class FFProbeResult_VideoStream extends FFProbeResult_Stream {
 
 		parent::__construct($obj);
 
-		$this->width = (int)$obj['width'];
-		$this->height = (int)$obj['height'];
+		$this->width = $w = (int)$obj['width'];
+		$this->height = $h = (int)$obj['height'];
 
-		$this->sampleAspectRatioString = $sar = $obj['sample_aspect_ratio'];
-		$sarParts = explode(':', $sar);
-		if( !$sarParts[1] ) throw new GeneralExceptionWithData("Mising sample aspect ratio denominator", $obj);
-		$this->sampleAspectRatioFloat = $sarParts[0] / $sarParts[1];
+		$this->sampleAspectRatioString = $sar = $obj['sample_aspect_ratio'] ?: null;
+		$this->displayAspectRatioString = $dar = $obj['display_aspect_ratio'] ?: null;
 
-		$this->displayAspectRatioString = $dar = $obj['display_aspect_ratio'];
-		$darParts = explode(':', $dar);
-		$this->displayAspectRatioFloat = $darParts[0] / $darParts[1];
+		if( $sar && $dar ) {
+
+			$sarParts = explode(':', $sar);
+			$this->sampleAspectRatioFloat = $sarParts[0] / $sarParts[1];
+
+			$darParts = explode(':', $dar);
+			$this->displayAspectRatioFloat = $darParts[0] / $darParts[1];
+
+		} else {
+
+			$this->sampleAspectRatioFloat = $this->displayAspectRatioFloat = $w / $h;
+
+		}
 		
 	}
 
