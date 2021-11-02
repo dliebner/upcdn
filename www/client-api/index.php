@@ -220,12 +220,12 @@ switch( $action ) {
 
 					// Uploaded video is "wider" (proportionally) than the target dimensions
 					$constrainWidth = $targetWidth * 2; // 2x resolution
-					$constrainHeight = -2;
+					$constrainHeight = -1; // fuck TODO: back to -2
 
 				} else {
 
 					// Uploaded video is "taller" (proportionally) than the target dimensions
-					$constrainWidth = -2;
+					$constrainWidth = -1; // fuck TODO: back to -2
 					$constrainHeight = $targetHeight * 2; // 2x resolution
 
 				}
