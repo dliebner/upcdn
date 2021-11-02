@@ -63,7 +63,7 @@ chown -R $(id -u bgcdn):$(id -g bgcdn) "$dir"
 docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault ffmpeg -hwaccel none \
 -progress /dev/stdout \
 -i "$inFile" \
--vsync 0
+-vsync 0 \
 -map 0:v:0 -map 0:a:0? \
 -map_metadata -1 \
 "${encodeParams[@]}" \
