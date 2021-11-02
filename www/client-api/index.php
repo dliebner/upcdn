@@ -291,32 +291,9 @@ switch( $action ) {
 
 				$tcJob->startTranscode();
 
-				// TODO: start the docker transcode and assign the docker container ID to the job
-
-				if( $passThroughVideo ) {
-
-					// Video is already under our target size and h264, just put into an mp4 container and remove metadata
-
-				} else {
-
-					// Add transcoding_jobs entry
-
-				}
-
 				// In-progress
 				AjaxResponse::returnSuccess([
-					'files' => $_FILES,
-					'hubResponse' => $responseData,
-					'cmd' => $cmd,
-					'result' => $execResult,
-					'output' => $ffprobeResult,
-					'probeResult' => $probeResult,
-					'transcodeTargets' => [
-						'bitRate' => $targetBitRate,
-						'sizeBytes' => $targetSizeBytes,
-						'width' => $targetWidth,
-						'height' => $targetHeight
-					]
+					'progressToken' => $tcJob->progressToken
 				]);
 
 			}

@@ -311,6 +311,23 @@ class CDNTools {
 		return $intified;
 
 	}
+
+	protected static function filenameSafeB64Encode($input) {
+		return str_replace('=', '', strtr(base64_encode($input), '+/', '-_'));
+	}
+	
+	// Generate a random string
+	public static function getRandomBase64($num_bytes = 10) {
+
+		$unpadChars = '[\-_]+';
+		
+		return preg_replace(
+			"/(^$unpadChars)|($unpadChars\$)/",
+			'',
+			self::filenameSafeB64Encode(openssl_random_pseudo_bytes($num_bytes))
+		);
+		
+	}
 	
 }
 
@@ -613,6 +630,7 @@ class TranscodingJob {
 	public $versionFilename;
 	public $jobSettings;
 	public $jobStarted;
+	public $progressToken;
 	public $dockerContainerId;
 	public $cloudUploadStarted;
 	public $transcodeStarted;
@@ -630,6 +648,7 @@ class TranscodingJob {
 		$this->versionFilename = $row['version_filename'];
 		$this->jobSettings = TranscodingJobSettings::fromJson($row['job_settings']);
 		$this->jobStarted = $row['job_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_started']) : null;
+		$this->progressToken = $row['progress_token'];
 		$this->dockerContainerId = $row['docker_container_id'] ?: null;
 		$this->cloudUploadStarted = $row['cloud_upload_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['cloud_upload_started']) : null;
 		$this->transcodeStarted = $row['transcode_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['transcode_started']) : null;
@@ -940,9 +959,31 @@ class TranscodingJob {
 
 	}
 
+	protected static function generateRandomProgressToken() {
+
+		global $db;
+
+		do {
+
+			$randToken = CDNTools::getRandomBase64(10);
+
+			$sql = "SELECT id
+				FROM transcoding_jobs
+				WHERE progress_token='" . original_to_query($randToken) . "'";
+
+			if( !$result = $db->sql_query($sql) ) throw new QueryException("Could not select", $sql);
+
+		} while( $db->sql_numrows($result) > 0 );
+
+		return $randToken;
+
+	}
+
 	public static function create($srcFilename, $srcIsNew, $srcExtension, $srcSizeBytes, $srcDuration, $versionFilename, TranscodingJobSettings $jobSettings) {
 
 		$db = db();
+
+		$progressToken = self::generateRandomProgressToken();
 
 		$sql = "INSERT INTO transcoding_jobs (
 			src_filename,
@@ -951,7 +992,8 @@ class TranscodingJob {
 			src_size_bytes,
 			src_duration,
 			version_filename,
-			job_settings
+			job_settings,
+			progressToken
 		) VALUES (
 			'" . original_to_query($srcFilename) . "',
 			" . (int)$srcIsNew . ",
@@ -959,7 +1001,8 @@ class TranscodingJob {
 			" . (int)$srcSizeBytes . ",
 			'" . original_to_query($srcDuration) . "',
 			'" . original_to_query($versionFilename) . "',
-			'" . original_to_query(json_encode($jobSettings)) . "'
+			'" . original_to_query(json_encode($jobSettings)) . "',
+			'" . original_to_query($progressToken) . "',
 		)";
 
 		if( !$db->sql_query($sql) ) throw new QueryException("Could not insert into transcoding_jobs", $sql);
