@@ -1,15 +1,15 @@
 
 # Updates 30s bandwidth from Redis
-* * * * * /usr/bin/php7.4 /home/bgcdn/cron/update-30s-bw.php
+* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/update-30s-bw.php
 
 # Maintains running total of bandwidth
-* * * * * /usr/bin/php7.4 /home/bgcdn/cron/add-bw-chunk.php
+* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/add-bw-chunk.php
 
 # Update disk free/total space
-* * * * * /usr/bin/php7.4 /home/bgcdn/cron/disk-stats.php
+* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/disk-stats.php
 
 # Figures out what files we need to retrieve
-#* * * * * /usr/bin/php7.4 /home/bgcdn/cron/handle-404s.php
+#* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/handle-404s.php
 
 # Prune old stopped docker containers (timestamp is relative to when container was started)
-11 * * * * docker container prune --filter "until=48h" -f
+11 * * * * bgcdn docker container prune --filter "until=48h" -f
