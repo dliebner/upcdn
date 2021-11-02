@@ -88,7 +88,9 @@ while( time() - $maxWaitTime < $start ) {
 
 				//print_r($file); echo "\n";
 
-			} else if( !$job->data['cloud_upload_started'] ) {
+			}
+			
+			if( $job->data['transcode_is_finished'] && !$job->data['cloud_upload_started'] ) {
 
 				$versionCloudUploads[] = $job;
 
