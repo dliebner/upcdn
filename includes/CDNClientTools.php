@@ -882,6 +882,7 @@ class TranscodingJob {
 				RecursiveIteratorIterator::LEAVES_ONLY
 			);
 
+			$i = 0;
 			foreach ($files as $file) {
 				// Skip directories (they would be added automatically)
 				if (!$file->isDir()) {
@@ -891,6 +892,7 @@ class TranscodingJob {
 
 					// Add current file to archive
 					$zip->addFile($filePath, $relativePath);
+					$zip->setCompressionIndex($i++, ZipArchive::CM_STORE);
 				}
 			}
 
