@@ -763,6 +763,7 @@ class TranscodingJob {
 		}
 
 		if( $this->jobSettings->saveAsHls ) $escapedArgs[] = "-s";
+		if( $this->jobSettings->passThroughVideo ) $escapedArgs[] = "-p";
 		if( $this->jobSettings->mute ) $escapedArgs[] = "-m";
 
 		$cmd = escapeshellcmd(
