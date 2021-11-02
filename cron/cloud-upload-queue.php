@@ -94,8 +94,8 @@ while( time() - $maxWaitTime < $start ) {
 
 				if( $job->isHls() ) {
 
-					// Dir containing index.m3u8 and ts files
-					$localDir = $job->wwwDir() . $job->versionFilename . '/';
+					// Zipped HLS files
+					$localFile = $job->hlsZipPath();
 
 				} else {
 

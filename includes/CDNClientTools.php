@@ -968,8 +968,13 @@ class TranscodingJob {
 
 		$sql = "SELECT *
 			FROM transcoding_jobs
-			WHERE src_is_new = 1
-			AND cloud_upload_started IS NULL
+			WHERE (
+				src_is_new = 1
+				AND src_cloud_upload_started IS NULL
+			) OR (
+				transcode_is_finished = 1
+				AND cloud_upload_started IS NULL
+			)
 			LIMIT " . self::CLOUD_UPLOAD_MAX_BATCH_UPLOADS;
 
 		if( !$result = $db->sql_query($sql) ) {
