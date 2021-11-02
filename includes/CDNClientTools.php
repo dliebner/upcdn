@@ -1147,7 +1147,7 @@ class TranscodingJob {
 
 	public function getCloudPath() {
 
-		return 'video_versions/' . $this->getDirPrefix() . $this->versionFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
+		return 'video_versions/' . $this->getDirPrefix() . $this->versionFilename . ($this->isHls() ? '.zip' : '.mp4');
 
 	}
 
