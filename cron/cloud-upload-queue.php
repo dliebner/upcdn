@@ -117,6 +117,9 @@ while( time() - $maxWaitTime < $start ) {
 
 		}
 
+		TranscodingJob::setSrcCloudUploadStarted($srcCloudUploads);
+		TranscodingJob::setCloudUploadStarted($versionCloudUploads);
+
 		$pup->doUpload();
 
 		if( $uploadedFiles = $pup->getAllUploadedFiles() ) {

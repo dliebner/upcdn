@@ -1002,7 +1002,7 @@ class TranscodingJob {
 	}
 
 	/** @param TranscodingJob[] $tJobs */
-	public static function setCloudUploadStarted( array $tJobs ) {
+	public static function setSrcCloudUploadStarted( array $tJobs ) {
 
 		if( !$tJobs ) return;
 
@@ -1011,28 +1011,7 @@ class TranscodingJob {
 		$jobIds = self::getJobIds($tJobs);
 
 		$sql = "UPDATE transcoding_jobs
-			SET cloud_upload_started = NOW()
-			WHERE id IN (" . implode(",", $jobIds) . ")";
-
-		if( !$db->sql_query($sql) ) {
-
-			throw new QueryException("Error updating", $sql);
-
-		}
-
-	}
-
-	/** @param TranscodingJob[] $tJobs */
-	public static function setSrcCloudUploadFinished( array $jobIds ) {
-
-		if( !$jobIds ) return;
-
-		$db = db();
-
-		$jobIds = CDNTools::intArray($jobIds);
-
-		$sql = "UPDATE transcoding_jobs
-			SET src_cloud_upload_finished = NOW()
+			SET src_cloud_upload_started = NOW()
 			WHERE id IN (" . implode(",", $jobIds) . ")";
 
 		if( !$db->sql_query($sql) ) {
@@ -1065,7 +1044,7 @@ class TranscodingJob {
 	}
 
 	/** @param TranscodingJob[] $tJobs */
-	public static function setCloudUploadFinished( array $jobIds ) {
+	public static function setSrcCloudUploadFinished( array $jobIds ) {
 
 		if( !$jobIds ) return;
 
@@ -1074,7 +1053,28 @@ class TranscodingJob {
 		$jobIds = CDNTools::intArray($jobIds);
 
 		$sql = "UPDATE transcoding_jobs
-			SET cloud_upload_finished = NOW()
+			SET src_cloud_upload_finished = NOW()
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function setCloudUploadStarted( array $tJobs ) {
+
+		if( !$tJobs ) return;
+
+		$db = db();
+
+		$jobIds = self::getJobIds($tJobs);
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_upload_started = NOW()
 			WHERE id IN (" . implode(",", $jobIds) . ")";
 
 		if( !$db->sql_query($sql) ) {
@@ -1096,6 +1096,27 @@ class TranscodingJob {
 
 		$sql = "UPDATE transcoding_jobs
 			SET cloud_upload_started = NULL
+			WHERE id IN (" . implode(",", $jobIds) . ")";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error updating", $sql);
+
+		}
+
+	}
+
+	/** @param TranscodingJob[] $tJobs */
+	public static function setCloudUploadFinished( array $jobIds ) {
+
+		if( !$jobIds ) return;
+
+		$db = db();
+
+		$jobIds = CDNTools::intArray($jobIds);
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_upload_finished = NOW()
 			WHERE id IN (" . implode(",", $jobIds) . ")";
 
 		if( !$db->sql_query($sql) ) {
