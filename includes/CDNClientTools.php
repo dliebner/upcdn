@@ -993,7 +993,7 @@ class TranscodingJob {
 			src_duration,
 			version_filename,
 			job_settings,
-			progressToken
+			progress_token
 		) VALUES (
 			'" . original_to_query($srcFilename) . "',
 			" . (int)$srcIsNew . ",
