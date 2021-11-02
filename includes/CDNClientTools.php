@@ -845,12 +845,13 @@ class TranscodingJob {
 
 		$db = db();
 
-		$pctComplete = $this->getPercentComplete($transcodeIsFinished, $dockerOutput);
+		$pctComplete = $this->getPercentComplete($transcodeIsFinished, $execResult, $dockerOutput);
 
 		if( !$transcodeIsFinished ) {
 
 			$sql = "UPDATE transcoding_jobs
-				SET transcode_fail_output = '" . original_to_query(json_encode($dockerOutput)) . "'
+				SET transcode_fail_code = '" . original_to_query(json_encode($execResult)) . "',
+					transcode_fail_output = '" . original_to_query(json_encode($dockerOutput)) . "'
 				WHERE id=" . (int)$this->id;
 
 			if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
@@ -937,6 +938,7 @@ class TranscodingJob {
 
 		$sql = "UPDATE transcoding_jobs
 			SET transcode_finished = NOW(),
+				transcode_fail_code = NULL,
 				transcode_fail_output = NULL
 			WHERE id=" . (int)$this->id;
 
@@ -1226,7 +1228,7 @@ class TranscodingJob {
 
 	}
 
-	public function getPercentComplete(&$isFinished = false, &$dockerOutput = null) {
+	public function getPercentComplete(&$isFinished = false, &$execResult = null, &$dockerOutput = null) {
 
 		$containerId = escapeshellarg($this->dockerContainerId);
 
