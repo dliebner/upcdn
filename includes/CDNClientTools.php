@@ -824,6 +824,22 @@ class TranscodingJob {
 
 	public function finishTranscode() {
 
+		$db = db();
+
+		$pctComplete = $this->getPercentComplete($transcodeIsFinished, $dockerOutput);
+
+		if( !$transcodeIsFinished ) {
+
+			$sql = "UPDATE transcoding_jobs
+				SET transcode_fail_output = '" . original_to_query(json_encode($dockerOutput)) . "'
+				WHERE id=" . (int)$this->id;
+
+			if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+			return false;
+
+		}
+
 		$transcodeOutDir = $this->inProgressDir() . CDNClient::DIR_TRANSCODE_OUTPUT;
 		$wwwDir = $this->wwwDir();
 
@@ -901,10 +917,13 @@ class TranscodingJob {
 		}
 
 		$sql = "UPDATE transcoding_jobs
-			SET transcode_finished = NOW()
+			SET transcode_finished = NOW(),
+				transcode_fail_output = NULL
 			WHERE id=" . (int)$this->id;
 
-		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+		return true;
 
 	}
 
@@ -1164,7 +1183,7 @@ class TranscodingJob {
 
 	}
 
-	public function getPercentComplete(&$isFinished = false) {
+	public function getPercentComplete(&$isFinished = false, &$dockerOutput = null) {
 
 		$containerId = escapeshellarg($this->dockerContainerId);
 
@@ -1174,9 +1193,9 @@ class TranscodingJob {
 
 		exec($cmd, $execOutput, $execResult);
 
-		if( $execResult === 0 ) {
+		$execOutput = $dockerOutput = $execOutput ? implode(PHP_EOL, $execOutput) : $execOutput;
 
-			$execOutput = implode(PHP_EOL, $execOutput);
+		if( $execResult === 0 ) {
 
 			// Finished?
 			if( preg_match('/^progress=end/im', $execOutput) ) {
