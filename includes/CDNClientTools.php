@@ -857,7 +857,7 @@ class TranscodingJob {
 				// Move files
 				rename($filePath, $wwwDir . $relativePath);
 
-				echo "rename $filePath ${wwwDir}${relativePath}";
+				echo "rename $filePath ${wwwDir}${relativePath}\n";
 
 			}
 
