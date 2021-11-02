@@ -1002,7 +1002,7 @@ class TranscodingJob {
 			'" . original_to_query($srcDuration) . "',
 			'" . original_to_query($versionFilename) . "',
 			'" . original_to_query(json_encode($jobSettings)) . "',
-			'" . original_to_query($progressToken) . "',
+			'" . original_to_query($progressToken) . "'
 		)";
 
 		if( !$db->sql_query($sql) ) throw new QueryException("Could not insert into transcoding_jobs", $sql);
