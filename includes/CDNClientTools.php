@@ -836,8 +836,6 @@ class TranscodingJob {
 			RecursiveIteratorIterator::LEAVES_ONLY
 		);
 
-		$filesMoved = 0;
-
 		foreach( $files as $file ) {
 
 			$filePath = $file->getRealPath();
@@ -859,7 +857,7 @@ class TranscodingJob {
 				// Move files
 				rename($filePath, $wwwDir . $relativePath);
 
-				$filesMoved++;
+				echo "rename $filePath ${wwwDir}${relativePath}";
 
 			}
 
