@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts d:i:o:b:w:h:st:m flag
+while getopts d:i:o:b:w:h:st:pm flag
 do
     case "${flag}" in
         d) dir=${OPTARG};;
@@ -11,6 +11,7 @@ do
         h) constrainHeight=${OPTARG};;
         s) hlsOutput=1;;
         t) hlsTime=${OPTARG};;
+        p) passthrough=1;;
         m) mute=1;;
     esac
 done
@@ -24,6 +25,18 @@ fi
 
 
 encodeParams=()
+
+if [ ! -z "$passthrough" ] && [ -z "$hlsOutput" ]; then
+	# Passthrough
+    encodeParams+=( -c:v copy )
+else
+    # Not Passthrough
+    encodeParams+=( -c:v h264 )
+    encodeParams+=( -b:v "$bitRate" -preset medium )
+    encodeParams+=( -vf "select='eq(n,0)+if(gt(t-prev_selected_t,1/30.50),1,0)'",scale="$constrainWidth:$constrainHeight" )
+    encodeParams+=( -sws_flags bicubic )
+    encodeParams+=( -movflags +faststart -pix_fmt yuv420p )
+fi
 
 if [ ! -z "$mute" ]; then
 	encodeParams+=( -an )
@@ -50,12 +63,7 @@ chown -R $(id -u bgcdn):$(id -g bgcdn) "$dir"
 docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault ffmpeg -hwaccel none \
 -progress /dev/stdout \
 -i "$inFile" \
--c:v h264 \
--preset medium \
--b:v "$bitRate" \
--vf "select='eq(n,0)+if(gt(t-prev_selected_t,1/30.50),1,0)'",scale="$constrainWidth:$constrainHeight" -vsync 0 \
--sws_flags bicubic \
--movflags +faststart -pix_fmt yuv420p \
+-vsync 0
 -map 0:v:0 -map 0:a:0? \
 -map_metadata -1 \
 "${encodeParams[@]}" \
