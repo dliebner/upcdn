@@ -997,7 +997,7 @@ class TranscodingJob {
 
 			/** @var SplFileInfo[] $files */
 			$files = new RecursiveIteratorIterator(
-				new RecursiveDirectoryIterator($this->hlsWWWDirPath()),
+				new RecursiveDirectoryIterator(realpath($this->hlsWWWDirPath())),
 				RecursiveIteratorIterator::LEAVES_ONLY
 			);
 
