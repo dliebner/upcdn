@@ -125,9 +125,12 @@ switch( $action ) {
 
 		}
 
-		if( !$pctComplete = $job->getPercentComplete($isFinished) ) {
+		if( !$pctComplete = $job->getPercentComplete($isFinished, $execResult, $dockerOutput) ) {
 
-			AjaxResponse::returnError("There was an error transcoding the video.");
+			AjaxResponse::returnError("There was an error transcoding the video.", debugEnabled() ? [
+				'execResult' => $execResult,
+				'dockerOutput' => $dockerOutput,
+			] : null);
 
 		}
 
