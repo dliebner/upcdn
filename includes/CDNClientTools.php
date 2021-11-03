@@ -1355,7 +1355,7 @@ class TranscodingJob {
 
 			}
 
-			if( preg_match_all('/^out_time_us=(\d+)/', $execOutput ?: "", $matches) ) {
+			if( preg_match_all('/^out_time_us=(\d+)/im', $execOutput ?: "", $matches) ) {
 
 				if( $lastOutTimeUs = array_pop($matches[1]) ) {
 
