@@ -1347,7 +1347,7 @@ class TranscodingJob {
 		if( $execResult === 0 ) {
 
 			// Finished?
-			if( preg_match('/^progress=end/im', $execOutput) ) {
+			if( preg_match('/^progress=end/im', $execOutput ?: "") ) {
 
 				$isFinished = true;
 
@@ -1355,7 +1355,7 @@ class TranscodingJob {
 
 			}
 
-			if( preg_match_all('/^out_time_us=(\d+)/', $execOutput, $matches) ) {
+			if( preg_match_all('/^out_time_us=(\d+)/', $execOutput ?: "", $matches) ) {
 
 				if( $lastOutTimeUs = array_pop($matches[1]) ) {
 
