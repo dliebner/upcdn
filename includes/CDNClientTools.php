@@ -151,7 +151,7 @@ class CDNClient {
 
 		if( !in_array($outputType, ['mp4','hls']) ) throw new Exception("Invalid output type");
 
-		self::postToHub(self::HUB_ACTION_CREATE_SOURCE_VIDEO, [
+		self::postToHub(self::HUB_ACTION_CREATE_VIDEO_VERSION, [
 			'sourceFilename' => $sourceFilename,
 			'versionWidth' => $versionWidth,
 			'versionHeight' => $versionHeight,
