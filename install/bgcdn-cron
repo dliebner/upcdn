@@ -8,6 +8,15 @@
 # Update disk free/total space
 * * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/disk-stats.php
 
+# Cloud uploads
+* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/cloud-upload-queue.php
+
+# Second cron
+#* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/second.php
+
+# Minute cron
+* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/minute.php
+
 # Figures out what files we need to retrieve
 #* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/handle-404s.php
 

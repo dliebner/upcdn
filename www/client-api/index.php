@@ -117,7 +117,24 @@ switch( $action ) {
 
 	case 'upload-progress':
 
-		// fuck TODO:
+		$progressToken = postdata_to_original($_POST['progressToken']);
+
+		if( !$job = TranscodingJob::getByProgressToken($progressToken) ) {
+
+			AjaxResponse::returnError("Invalid progress token.");
+
+		}
+
+		if( !$pctComplete = $job->getPercentComplete($isFinished) ) {
+
+			AjaxResponse::returnError("There was an error transcoding the video.");
+
+		}
+
+		AjaxResponse::returnSuccess([
+			"isFinished" => $isFinished,
+			"pctComplete" => $pctComplete
+		]);
 
 		break;
 

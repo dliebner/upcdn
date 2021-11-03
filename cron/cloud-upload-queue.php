@@ -110,7 +110,7 @@ while( time() - $maxWaitTime < $start ) {
 					'bgcdn:jobId' => $job->id,
 					'bgcdn:type' => 'version',
 					'FileName' => $job->getCloudPath(),
-					'LocalFile' => $localFile // TODO
+					'LocalFile' => $localFile
 				]);
 
 				//print_r($file); echo "\n";

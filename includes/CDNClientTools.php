@@ -701,6 +701,28 @@ class TranscodingJob {
 
 	}
 
+	public static function getByProgressToken($progressToken) {
+
+		$db = db();
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE progress_token = '" . original_to_query($progressToken) . "'";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		if( $row = $db->sql_fetchrow($result) ) {
+
+			return new self($row);
+
+		} else {
+
+			return false;
+
+		}
+
+	}
+
 	public static function getByContainerId($dockerContainerId) {
 
 		$db = db();
@@ -1012,6 +1034,22 @@ class TranscodingJob {
 		$insertId = $db->sql_nextid();
 
 		return self::getById($insertId);
+
+	}
+
+	public static function deleteExpiredJobs() {
+		
+		$db = db();
+
+		$sql = "DELETE
+			FROM transcoding_jobs
+			WHERE job_finished < NOW() - INTERVAL 1 HOUR";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException("Error deleting", $sql);
+
+		}
 
 	}
 
