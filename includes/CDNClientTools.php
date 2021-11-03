@@ -1368,7 +1368,11 @@ class TranscodingJob {
 
 			}
 
+			if( !$execOutput ) return 0;
+
 		}
+
+		return false;
 
 	}
 
