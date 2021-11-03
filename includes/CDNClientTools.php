@@ -22,6 +22,7 @@ class CDNClient {
 	const HUB_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
 	const HUB_ACTION_VALIDATE_CDN_TOKEN = 'validateCdnToken';
 	const HUB_ACTION_CREATE_SOURCE_VIDEO = 'createSourceVideo';
+	const HUB_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
 
 	const CLIENT_ACTION_INIT_SERVER = 'initServer';
 	const CLIENT_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
@@ -136,6 +137,31 @@ class CDNClient {
 				$success = true;
 
 				$hubResponseDataArray = (array)$response->data;
+
+			}
+		]);
+
+		return $success;
+
+	}
+
+	public static function createVideoVersion($sourceFilename, $versionWidth, $versionHeight, $outputType, $sizeBytes, $versionFilename) {
+
+		$success = false;
+
+		if( !in_array($outputType, ['mp4','hls']) ) throw new Exception("Invalid output type");
+
+		self::postToHub(self::HUB_ACTION_CREATE_SOURCE_VIDEO, [
+			'sourceFilename' => $sourceFilename,
+			'versionWidth' => $versionWidth,
+			'versionHeight' => $versionHeight,
+			'outputType' => $outputType,
+			'sizeBytes' => $sizeBytes,
+			'versionFilename' => $versionFilename,
+		],[
+			'success' => function($response) use (&$success) {
+
+				$success = true;
 
 			}
 		]);
@@ -628,6 +654,8 @@ class TranscodingJob {
 	public $srcSizeBytes;
 	public $srcDuration;
 	public $versionFilename;
+	public $versionWidth;
+	public $versionHeight;
 	public $jobSettings;
 	public $jobStarted;
 	public $progressToken;
@@ -646,6 +674,8 @@ class TranscodingJob {
 		$this->srcSizeBytes = (int)$row['src_size_bytes'];
 		$this->srcDuration = (float)$row['src_duration'];
 		$this->versionFilename = $row['version_filename'];
+		$this->versionWidth = (int)$row['version_width'];
+		$this->versionHeight = (int)$row['version_height'];
 		$this->jobSettings = TranscodingJobSettings::fromJson($row['job_settings']);
 		$this->jobStarted = $row['job_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_started']) : null;
 		$this->progressToken = $row['progress_token'];
@@ -921,6 +951,8 @@ class TranscodingJob {
 
 		}
 
+		$totalSizeBytes = 0;
+
 		if( $this->isHls() ) {
 
 			// Prepare zipped files for cloud upload
@@ -943,6 +975,9 @@ class TranscodingJob {
 			foreach ($files as $file) {
 				// Skip directories (they would be added automatically)
 				if (!$file->isDir()) {
+
+					$totalSizeBytes += $file->getSize();
+
 					// Get real and relative path for current file
 					$filePath = $file->getRealPath();
 					$relativePath = substr($filePath, strlen($basePath) + 1);
@@ -956,6 +991,26 @@ class TranscodingJob {
 			// Zip archive will be created only after closing object
 			$zip->close();
 
+		} else {
+
+			// Just get size
+
+			/** @var SplFileInfo[] $files */
+			$files = new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator($this->hlsWWWDirPath()),
+				RecursiveIteratorIterator::LEAVES_ONLY
+			);
+
+			foreach ($files as $file) {
+
+				if( !$file->isDir()) {
+
+					$totalSizeBytes += $file->getSize();
+
+				}
+
+			}
+
 		}
 
 		$sql = "UPDATE transcoding_jobs
@@ -965,6 +1020,12 @@ class TranscodingJob {
 			WHERE id=" . (int)$this->id;
 
 		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+		if( !CDNClient::createVideoVersion($this->srcFilename, $this->versionWidth, $this->versionHeight, $this->isHls() ? 'hls' : 'mp4', $totalSizeBytes, $this->versionFilename) ) {
+
+			throw new Exception("Error updating hub server.");
+
+		}
 
 		return true;
 
@@ -1003,7 +1064,7 @@ class TranscodingJob {
 
 	}
 
-	public static function create($srcFilename, $srcIsNew, $srcExtension, $srcSizeBytes, $srcDuration, $versionFilename, TranscodingJobSettings $jobSettings) {
+	public static function create($srcFilename, $srcIsNew, $srcExtension, $srcSizeBytes, $srcDuration, $versionFilename, $versionWidth, $versionHeight, TranscodingJobSettings $jobSettings) {
 
 		$db = db();
 
@@ -1016,6 +1077,8 @@ class TranscodingJob {
 			src_size_bytes,
 			src_duration,
 			version_filename,
+			version_width,
+			version_height,
 			job_settings,
 			progress_token
 		) VALUES (
@@ -1025,6 +1088,8 @@ class TranscodingJob {
 			" . (int)$srcSizeBytes . ",
 			'" . original_to_query($srcDuration) . "',
 			'" . original_to_query($versionFilename) . "',
+			" . (int)$versionWidth . ",
+			" . (int)$versionHeight . ",
 			'" . original_to_query(json_encode($jobSettings)) . "',
 			'" . original_to_query($progressToken) . "'
 		)";

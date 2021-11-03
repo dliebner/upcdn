@@ -289,7 +289,7 @@ switch( $action ) {
 				$versionFilename = $hubResponseDataArray['versionFilename'];
 
 				// Start new job
-				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, new TranscodingJobSettings(
+				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
 					$targetBitRate,
 					$constrainWidth,
 					$constrainHeight,
