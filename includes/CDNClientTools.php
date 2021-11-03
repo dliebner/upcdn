@@ -994,10 +994,11 @@ class TranscodingJob {
 		} else {
 
 			// Just get size
+			$basePath = realpath($this->wwwDir());
 
 			/** @var SplFileInfo[] $files */
 			$files = new RecursiveIteratorIterator(
-				new RecursiveDirectoryIterator(realpath($this->hlsWWWDirPath())),
+				new RecursiveDirectoryIterator($basePath),
 				RecursiveIteratorIterator::LEAVES_ONLY
 			);
 
