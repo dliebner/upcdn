@@ -136,7 +136,7 @@ class CDNClient {
 
 				$success = true;
 
-				$hubResponseDataArray = (array)$response->data;
+				$hubResponseDataArray = CDNTools::objectToArrayRecursive($response->data);
 
 			}
 		]);
@@ -482,7 +482,7 @@ class FFProbeResult_Stream {
 	public static function createFromJson($json) {
 
 		if( is_string($json) ) $json = json_decode($json, true);
-		if( is_object($json) ) $json = (array)$json;
+		if( is_object($json) ) $json = CDNTools::objectToArrayRecursive($json);
 		if( !is_array($json) ) throw new Exception("Error creating FFProbeResult_Stream from \$json");
 
 		$codecType = $json['codec_type'];
@@ -570,7 +570,7 @@ class FFProbeResult {
 	public function __construct($json) {
 
 		if( is_string($json) ) $json = json_decode($json, true);
-		if( is_object($json) ) $json = (array)$json;
+		if( is_object($json) ) $json = CDNTools::objectToArrayRecursive($json);
 		if( !is_array($json) ) throw new Exception("Error constructing FFProbeResult from \$json");
 		if( !$format = $json['format'] ) throw new Exception("Error reading format");
 		if( !$streams = $json['streams'] ) throw new Exception("Error reading streams");
