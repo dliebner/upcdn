@@ -320,7 +320,7 @@ switch( $action ) {
 				// In-progress
 				AjaxResponse::returnSuccess([
 					'progressToken' => $tcJob->progressToken,
-					'meta' => $returnMeta,
+					'meta' => $hubResponseDataArray['returnMeta'] //$returnMeta,
 				]);
 
 			}
