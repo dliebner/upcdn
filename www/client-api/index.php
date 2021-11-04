@@ -164,6 +164,8 @@ switch( $action ) {
 		$cdnToken = postdata_to_original($_POST['cdnToken']);
 		$userId = (int)$_POST['userId'];
 
+		$returnMeta = [];
+
 		if( !CDNClient::validateCdnToken($cdnToken, $action, $responseData, $_SERVER['REMOTE_ADDR'], $userId) ) {
 
 			AjaxResponse::returnError("Invalid upload token.");
@@ -172,6 +174,7 @@ switch( $action ) {
 
 		// Grab metadata
 		$meta = $responseData['meta'];
+		if( is_array($responseData['returnMeta']) ) $returnMeta = $responseData['returnMeta'] + $returnMeta;
 
 		// Validate video file
 		$fileUploadLimit = $responseData['fileUploadLimit'];
@@ -292,6 +295,7 @@ switch( $action ) {
 				$sourceFilename = $hubResponseDataArray['sourceFilename'];
 				$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
 				$versionFilename = $hubResponseDataArray['versionFilename'];
+				if( is_array($hubResponseDataArray['returnMeta']) ) $returnMeta = $hubResponseDataArray['returnMeta'] + $returnMeta;
 
 				// Start new job
 				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
@@ -315,7 +319,8 @@ switch( $action ) {
 
 				// In-progress
 				AjaxResponse::returnSuccess([
-					'progressToken' => $tcJob->progressToken
+					'progressToken' => $tcJob->progressToken,
+					'meta' => $returnMeta,
 				]);
 
 			}
