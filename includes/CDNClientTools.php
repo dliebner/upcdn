@@ -107,7 +107,7 @@ class CDNClient {
 
 				if( $response->data && $response->data->result ) $success = true;
 
-				$hubResponseDataArray = (array)$response->data;
+				$hubResponseDataArray = CDNTools::objectToArrayRecursive($response->data);
 
 			}
 		]);
@@ -353,6 +353,28 @@ class CDNTools {
 			self::filenameSafeB64Encode(openssl_random_pseudo_bytes($num_bytes))
 		);
 		
+	}
+
+	public static function objectToArrayRecursive($obj) {
+
+		if( is_object($obj) || is_array($obj) ) {
+
+			$ret = (array)$obj;
+
+			foreach( $ret as &$item ) {
+
+				$item = self::objectToArrayRecursive($item);
+
+			}
+
+			return $ret;
+
+		} else {
+
+			return $obj;
+
+		}
+
 	}
 	
 }
