@@ -125,21 +125,40 @@ switch( $action ) {
 
 		}
 
-		$pctComplete = $job->getPercentComplete($isFinished, $execResult, $dockerOutput);
+		if( $job->transcodeFinished ) {
 
-		if( $pctComplete === false ) {
+			$ret = [
+				"isFinished" => true,
+				"pctComplete" => 1
+			];
 
-			AjaxResponse::returnError("There was an error transcoding the video.", debugEnabled() ? [
-				'execResult' => $execResult,
-				'dockerOutput' => $dockerOutput,
-			] : null);
+			if( $job->data['hub_return_meta'] ) {
+
+				$ret['meta'] = json_decode($job->data['hub_return_meta']);
+
+			}
+
+			AjaxResponse::returnSuccess($ret);
+
+		} else {
+
+			$pctComplete = $job->getPercentComplete($isFinished, $execResult, $dockerOutput);
+
+			if( $pctComplete === false ) {
+
+				AjaxResponse::returnError("There was an error transcoding the video.", debugEnabled() ? [
+					'execResult' => $execResult,
+					'dockerOutput' => $dockerOutput,
+				] : null);
+
+			}
+
+			AjaxResponse::returnSuccess([
+				"isFinished" => false,
+				"pctComplete" => $pctComplete
+			]);
 
 		}
-
-		AjaxResponse::returnSuccess([
-			"isFinished" => $isFinished,
-			"pctComplete" => $pctComplete
-		]);
 
 		break;
 

@@ -145,7 +145,7 @@ class CDNClient {
 
 	}
 
-	public static function createVideoVersion($sourceFilename, $versionWidth, $versionHeight, $outputType, $sizeBytes, $versionFilename) {
+	public static function createVideoVersion($sourceFilename, $versionWidth, $versionHeight, $outputType, $sizeBytes, $versionFilename, &$hubResponseDataArray = null) {
 
 		$success = false;
 
@@ -159,9 +159,11 @@ class CDNClient {
 			'sizeBytes' => $sizeBytes,
 			'versionFilename' => $versionFilename,
 		],[
-			'success' => function($response) use (&$success) {
+			'success' => function($response) use (&$success, &$hubResponseDataArray) {
 
 				$success = true;
+
+				$hubResponseDataArray = CDNTools::objectToArrayRecursive($response->data);
 
 			}
 		]);
@@ -680,10 +682,12 @@ class TranscodingJob {
 	public $versionHeight;
 	public $jobSettings;
 	public $jobStarted;
+	public $jobFinished;
 	public $progressToken;
 	public $dockerContainerId;
 	public $cloudUploadStarted;
 	public $transcodeStarted;
+	public $transcodeFinished;
 
 	public $data;
 
@@ -700,10 +704,12 @@ class TranscodingJob {
 		$this->versionHeight = (int)$row['version_height'];
 		$this->jobSettings = TranscodingJobSettings::fromJson($row['job_settings']);
 		$this->jobStarted = $row['job_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_started']) : null;
+		$this->jobFinished = $row['job_finished'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_finished']) : null;
 		$this->progressToken = $row['progress_token'];
 		$this->dockerContainerId = $row['docker_container_id'] ?: null;
 		$this->cloudUploadStarted = $row['cloud_upload_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['cloud_upload_started']) : null;
 		$this->transcodeStarted = $row['transcode_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['transcode_started']) : null;
+		$this->transcodeFinished = $row['transcode_finished'] ? CDNTools::dateTimeFromMysqlDateTime($row['transcode_finished']) : null;
 
 		$this->data = $row;
 		
@@ -1036,19 +1042,20 @@ class TranscodingJob {
 
 		}
 
-		$sql = "UPDATE transcoding_jobs
-			SET transcode_finished = NOW(),
-				transcode_fail_code = NULL,
-				transcode_fail_output = NULL
-			WHERE id=" . (int)$this->id;
-
-		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
-
-		if( !CDNClient::createVideoVersion($this->srcFilename, $this->versionWidth, $this->versionHeight, $this->isHls() ? 'hls' : 'mp4', $totalSizeBytes, $this->versionFilename) ) {
+		if( !CDNClient::createVideoVersion($this->srcFilename, $this->versionWidth, $this->versionHeight, $this->isHls() ? 'hls' : 'mp4', $totalSizeBytes, $this->versionFilename, $hubResponseDataArray) ) {
 
 			throw new Exception("Error updating hub server.");
 
 		}
+
+		$sql = "UPDATE transcoding_jobs
+			SET transcode_finished = NOW(),
+				transcode_fail_code = NULL,
+				transcode_fail_output = NULL,
+				hub_return_meta = " . ($hubResponseDataArray['returnMeta'] ? "'" . json_encode($hubResponseDataArray['returnMeta']) . "'" : "NULL") . "
+			WHERE id=" . (int)$this->id;
+
+		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
 
 		return true;
 
