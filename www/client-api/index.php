@@ -310,11 +310,21 @@ switch( $action ) {
 					AjaxResponse::returnError("Error saving source video.");
 
 				}
+				
+				if( is_array($hubResponseDataArray['returnMeta']) ) $returnMeta = $hubResponseDataArray['returnMeta'] + $returnMeta;
+
+				if( $hubResponseDataArray['versionExists'] ) {
+
+					AjaxResponse::returnSuccess([
+						'versionExists' => true,
+						'meta' => $returnMeta
+					]);
+
+				}
 
 				$sourceFilename = $hubResponseDataArray['sourceFilename'];
 				$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
 				$versionFilename = $hubResponseDataArray['versionFilename'];
-				if( is_array($hubResponseDataArray['returnMeta']) ) $returnMeta = $hubResponseDataArray['returnMeta'] + $returnMeta;
 
 				// Start new job
 				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
