@@ -218,141 +218,127 @@ switch( $action ) {
 
 		}
 
-		// ffprobe (TODO: functionize)
-		$dir = escapeshellarg(dirname($tmpFile));
-		$filename = escapeshellarg(basename($tmpFile));
-		$cmd = escapeshellcmd(
-			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $dir -f $filename"
-		);
+		if( $probeResult = FFProbe::dockerProxyProbe($tmpFile, $execResult, $execOutput, $ffprobeResultRaw) ) {
 
-		exec($cmd, $execOutput, $execResult);
+			// Check probe result
 
-		if( $execResult === 0 ) {
+			/** @var FFProbeResult_VideoStream */
+			if( !$videoStream = $probeResult->videoStreams[0] ) {
 
-			if( $ffprobeResult = json_decode(implode(PHP_EOL, $execOutput), true) ) {
+				AjaxResponse::returnError("Invalid video file.");
 
-				unset($execOutput);
+			}
 
-				// Check probe result
-				$probeResult = new FFProbeResult($ffprobeResult);
+			// Video encoding settings
+			$targetBitRate = $responseData['bitRate'];
+			$duration = $probeResult->duration;
+			$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
+			$targetWidth = $responseData['width'];
+			$targetHeight = $responseData['height'];
+			$mute = (bool)$responseData['mute'];
+			$hlsByteSizeThreshold = $responseData['hlsByteSizeThreshold'];
+			$passThroughVideo = $fileSizeBytes <= $maxSizeBytes && $videoStream->codecName === 'h264';
 
-				/** @var FFProbeResult_VideoStream */
-				if( !$videoStream = $probeResult->videoStreams[0] ) {
+			// Source video info
+			$sourceHasAudio = $probeResult->hasAudio();
+			$sourceWidth = $videoStream->displayWidth();
+			$sourceHeight = $videoStream->displayHeight();
 
-					AjaxResponse::returnError("Invalid video file.");
+			// Determine constraining width/height
+			$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
+			$targetAspectRatio = $targetWidth / $targetHeight;
 
-				}
+			if( $uploadedAspectRatio > $targetAspectRatio ) {
 
-				// Video encoding settings
-				$targetBitRate = $responseData['bitRate'];
-				$duration = $probeResult->duration;
-				$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
-				$targetWidth = $responseData['width'];
-				$targetHeight = $responseData['height'];
-				$hlsByteSizeThreshold = $responseData['hlsByteSizeThreshold'];
-				$passThroughVideo = $fileSizeBytes <= $maxSizeBytes && $videoStream->codecName === 'h264';
+				// Uploaded video is "wider" (proportionally) than the target dimensions
+				$constrainWidth = $targetWidth * 2; // 2x resolution
+				$constrainHeight = -2;
 
-				// Source video info
-				$sourceWidth = $videoStream->displayWidth();
-				$sourceHeight = $videoStream->displayHeight();
+			} else {
 
-				// Determine constraining width/height
-				$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
-				$targetAspectRatio = $targetWidth / $targetHeight;
+				// Uploaded video is "taller" (proportionally) than the target dimensions
+				$constrainWidth = -2;
+				$constrainHeight = $targetHeight * 2; // 2x resolution
 
-				if( $uploadedAspectRatio > $targetAspectRatio ) {
+			}
+			
+			if( $passThroughVideo && $fileSizeBytes < $hlsByteSizeThreshold ) {
 
-					// Uploaded video is "wider" (proportionally) than the target dimensions
-					$constrainWidth = $targetWidth * 2; // 2x resolution
-					$constrainHeight = -2;
+				// Don't need to save as HLS if we can passthrough and we're under the HLS byte size threshold
+				$saveAsHls = false;
 
-				} else {
+			} else {
 
-					// Uploaded video is "taller" (proportionally) than the target dimensions
-					$constrainWidth = -2;
-					$constrainHeight = $targetHeight * 2; // 2x resolution
+				$passThroughVideo = false;
 
-				}
-				
-				if( $passThroughVideo && $fileSizeBytes < $hlsByteSizeThreshold ) {
+				$saveAsHls = $targetSizeBytes >= $hlsByteSizeThreshold;
 
-					// Don't need to save as HLS if we can passthrough and we're under the HLS byte size threshold
-					$saveAsHls = false;
+			}
 
-				} else {
+			if( !($passThroughVideo || $probeResult->duration <= $maxDuration) ) {
 
-					$passThroughVideo = false;
+				AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long.");
 
-					$saveAsHls = $targetSizeBytes >= $hlsByteSizeThreshold;
+			}
 
-				}
+			$sha1 = sha1_file($tmpFile);
 
-				if( !($passThroughVideo || $probeResult->duration <= $maxDuration) ) {
+			/**
+			 * Submit to hub server to add video:
+			 * 	- creative_video_src (if not exists based on file hash)
+			 *  - creative_video_versions
+			 * 
+			 * Get:
+			 * 	- src filename
+			 * 	- version_filename?
+			 */
 
-					AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long.");
+			if( !CDNClient::createSourceVideo($meta, $originalExtension, $sourceWidth, $sourceHeight, $sourceHasAudio, $fileSizeBytes, $duration, $ffprobeResultRaw, $sha1, $hubResponseDataArray) ) {
 
-				}
+				AjaxResponse::returnError("Error saving source video.");
 
-				$sha1 = sha1_file($tmpFile);
+			}
+			
+			if( is_array($hubResponseDataArray['returnMeta']) ) $returnMeta = $hubResponseDataArray['returnMeta'] + $returnMeta;
 
-				/**
-				 * Submit to hub server to add video:
-				 * 	- creative_video_src (if not exists based on file hash)
-				 *  - creative_video_versions
-				 * 
-				 * Get:
-				 * 	- src filename
-				 * 	- version_filename?
-				 */
+			if( $hubResponseDataArray['versionExists'] ) {
 
-				if( !CDNClient::createSourceVideo($meta, $originalExtension, $sourceWidth, $sourceHeight, $fileSizeBytes, $duration, $ffprobeResult, $sha1, $hubResponseDataArray) ) {
-
-					AjaxResponse::returnError("Error saving source video.");
-
-				}
-				
-				if( is_array($hubResponseDataArray['returnMeta']) ) $returnMeta = $hubResponseDataArray['returnMeta'] + $returnMeta;
-
-				if( $hubResponseDataArray['versionExists'] ) {
-
-					AjaxResponse::returnSuccess([
-						'versionExists' => true,
-						'meta' => $returnMeta
-					]);
-
-				}
-
-				$sourceFilename = $hubResponseDataArray['sourceFilename'];
-				$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
-				$versionFilename = $hubResponseDataArray['versionFilename'];
-
-				// Start new job
-				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
-					$targetBitRate,
-					$constrainWidth,
-					$constrainHeight,
-					$passThroughVideo,
-					$saveAsHls,
-					null,
-					true
-				));
-
-				// Move file to in-progress folder (/home/bgcdn/transcoding)
-				if( !$tcJob->moveUploadedFile($tmpFile) ) {
-
-					AjaxResponse::returnError("Error preparing transcoding job.");
-
-				}
-
-				$tcJob->startTranscode();
-
-				// In-progress
 				AjaxResponse::returnSuccess([
-					'progressToken' => $tcJob->progressToken,
-					'meta' => $returnMeta,
+					'versionExists' => true,
+					'meta' => $returnMeta
 				]);
 
 			}
+
+			$sourceFilename = $hubResponseDataArray['sourceFilename'];
+			$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
+			$versionFilename = $hubResponseDataArray['versionFilename'];
+
+			// Start new job
+			$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
+				$targetBitRate,
+				$constrainWidth,
+				$constrainHeight,
+				$passThroughVideo,
+				$saveAsHls,
+				null,
+				$mute
+			));
+
+			// Move file to in-progress folder (/home/bgcdn/transcoding)
+			if( !$tcJob->moveUploadedFile($tmpFile) ) {
+
+				AjaxResponse::returnError("Error preparing transcoding job.");
+
+			}
+
+			$tcJob->startTranscode();
+
+			// In-progress
+			AjaxResponse::returnSuccess([
+				'progressToken' => $tcJob->progressToken,
+				'meta' => $returnMeta,
+			]);
 
 		}
 
@@ -360,7 +346,7 @@ switch( $action ) {
 			'cmd' => $cmd,
 			'execResult' => $execResult,
 			'execOutput' => $execOutput,
-			'ffprobeResult' => $ffprobeResult
+			'ffprobeResultRaw' => $ffprobeResultRaw
 		] : null);
 
 		break;

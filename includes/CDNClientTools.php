@@ -116,7 +116,7 @@ class CDNClient {
 
 	}
 
-	public static function createSourceVideo($meta, $sourceExtension, $sourceWidth, $sourceHeight, $sourceSizeBytes, $duration, $ffprobeResultJson, $sha1, &$hubResponseDataArray = null) {
+	public static function createSourceVideo($meta, $sourceExtension, $sourceWidth, $sourceHeight, $sourceHasAudio, $sourceSizeBytes, $duration, $ffprobeResultJson, $sha1, &$hubResponseDataArray = null) {
 
 		$success = false;
 
@@ -127,6 +127,7 @@ class CDNClient {
 			'sourceExtension' => $sourceExtension,
 			'sourceWidth' => $sourceWidth,
 			'sourceHeight' => $sourceHeight,
+			'sourceHasAudio' => $sourceHasAudio,
 			'sourceSizeBytes' => $sourceSizeBytes,
 			'duration' => $duration,
 			'ffprobeResultJson' => json_encode($ffprobeResultJson),
@@ -145,7 +146,7 @@ class CDNClient {
 
 	}
 
-	public static function createVideoVersion($sourceFilename, $versionWidth, $versionHeight, $outputType, $sizeBytes, $versionFilename, &$hubResponseDataArray = null) {
+	public static function createVideoVersion($sourceFilename, $versionWidth, $versionHeight, $versionHasAudio, $outputType, $sizeBytes, $versionFilename, &$hubResponseDataArray = null) {
 
 		$success = false;
 
@@ -155,6 +156,7 @@ class CDNClient {
 			'sourceFilename' => $sourceFilename,
 			'versionWidth' => $versionWidth,
 			'versionHeight' => $versionHeight,
+			'versionHasAudio' => $versionHasAudio,
 			'outputType' => $outputType,
 			'sizeBytes' => $sizeBytes,
 			'versionFilename' => $versionFilename,
@@ -464,6 +466,34 @@ class CpuPercentCalculator {
 
 }
 
+class FFProbe {
+
+	public static function dockerProxyProbe($videoFilePath, &$execResult = null, &$execOutput = null, &$ffprobeResultRaw = null) {
+
+		$dir = escapeshellarg(dirname($videoFilePath));
+		$filename = escapeshellarg(basename($videoFilePath));
+		$cmd = escapeshellcmd(
+			"sudo /home/bgcdn/scripts/docker-ffprobe.sh -d $dir -f $filename"
+		);
+
+		exec($cmd, $execOutput, $execResult);
+
+		if( $execResult === 0 ) {
+
+			if( $ffprobeResultRaw = json_decode(implode(PHP_EOL, $execOutput), true) ) {
+
+				return new FFProbeResult($ffprobeResultRaw);
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+}
+
 class FFProbeResult_Stream {
 
 	public $codecType;
@@ -599,6 +629,12 @@ class FFProbeResult {
 
 		}
 		
+	}
+
+	public function hasAudio() {
+
+		return count($this->audioStreams) > 0;
+
 	}
 
 }
@@ -981,6 +1017,8 @@ class TranscodingJob {
 
 		$totalSizeBytes = 0;
 
+		$probeVideoFile = null;
+
 		if( $this->isHls() ) {
 
 			// Prepare zipped files for cloud upload
@@ -1004,11 +1042,15 @@ class TranscodingJob {
 				// Skip directories (they would be added automatically)
 				if (!$file->isDir()) {
 
+					// Count size in bytes
 					$totalSizeBytes += $file->getSize();
 
 					// Get real and relative path for current file
 					$filePath = $file->getRealPath();
 					$relativePath = substr($filePath, strlen($basePath) + 1);
+
+					// Set video file to probe
+					if( !$probeVideoFile && $file->getFilename() === 'index0.ts' ) $probeVideoFile = $filePath;
 
 					// Add current file to archive
 					$zip->addFile($filePath, $relativePath);
@@ -1034,6 +1076,10 @@ class TranscodingJob {
 
 				if( !$file->isDir()) {
 
+					// Set video file to probe
+					if( !$probeVideoFile && $file->getExtension() === 'mp4' ) $probeVideoFile = $file->getRealPath();
+
+					// Count size in bytes
 					$totalSizeBytes += $file->getSize();
 
 				}
@@ -1042,7 +1088,19 @@ class TranscodingJob {
 
 		}
 
-		if( !CDNClient::createVideoVersion($this->srcFilename, $this->versionWidth, $this->versionHeight, $this->isHls() ? 'hls' : 'mp4', $totalSizeBytes, $this->versionFilename, $hubResponseDataArray) ) {
+		if( !$probeResult = FFProbe::dockerProxyProbe($probeVideoFile, $execResult, $execOutput, $ffprobeResultRaw) ) {
+
+			throw new GeneralExceptionWithData("Error getting probe result", [
+				'execResult' => $execResult,
+				'execOutput' => $execOutput,
+				'ffprobeResultRaw' => $ffprobeResultRaw
+			]);
+
+		}
+
+		$hasAudio = $probeResult->hasAudio();
+
+		if( !CDNClient::createVideoVersion($this->srcFilename, $this->versionWidth, $this->versionHeight, $hasAudio, $this->isHls() ? 'hls' : 'mp4', $totalSizeBytes, $this->versionFilename, $hubResponseDataArray) ) {
 
 			throw new Exception("Error updating hub server.");
 
