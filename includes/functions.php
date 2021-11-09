@@ -478,6 +478,15 @@ class AjaxResponse {
 		die( self::status('success', null, $data) );
 		
 	}
+
+	public static function returnSuccessPersist( $data = array() ) {
+
+		echo self::status('success', null, $data);
+
+		// Closes the connection but keeps the script running
+		fastcgi_finish_request();
+
+	}
 	
 	public static function returnError( $message, $data = array() ) {
 		

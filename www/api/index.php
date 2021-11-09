@@ -4,6 +4,8 @@ define('IN_SCRIPT', 1);
 
 $root_path = './../../';
 
+use dliebner\B2\Client;
+
 include_once( $root_path . 'common.php' );
 require_once( $root_path . 'includes/JSONEncrypt.php');
 
@@ -97,6 +99,81 @@ switch( $payload->action ) {
 		AjaxResponse::returnSuccess([
 			'clientServerStatus' => ServerStatus::getAll(),
 		]);
+
+		break;
+
+	case CDNClient::CLIENT_ACTION_CREATE_VIDEO_VERSION:
+
+		if( !$sourceFilename = $params->sourceFilename ) AjaxResponse::criticalDie("Missing sourceFilename");
+		if( !isset($params->sourceIsNew) ) AjaxResponse::criticalDie("Missing sourceIsNew");
+		$sourceIsNew = $params->sourceIsNew;
+		if( !$originalExtension = $params->originalExtension ) AjaxResponse::criticalDie("Missing originalExtension");
+		if( !$fileSizeBytes = $params->fileSizeBytes ) AjaxResponse::criticalDie("Missing fileSizeBytes");
+		if( !$maxSizeBytes = $params->maxSizeBytes ) AjaxResponse::criticalDie("Missing maxSizeBytes");
+		if( !$duration = $params->duration ) AjaxResponse::criticalDie("Missing duration");
+		if( !$versionFilename = $params->versionFilename ) AjaxResponse::criticalDie("Missing versionFilename");
+		if( !$versionWidth = $params->versionWidth ) AjaxResponse::criticalDie("Missing versionWidth");
+		if( !$versionHeight = $params->versionHeight ) AjaxResponse::criticalDie("Missing versionHeight");
+		if( !$targetBitRate = $params->bitRate ) AjaxResponse::criticalDie("Missing bitRate");
+		if( !$hlsByteSizeThreshold = $params->hlsByteSizeThreshold ) AjaxResponse::criticalDie("Missing hlsByteSizeThreshold");
+		if( !$sourceFfprobeJson = $params->sourceFfprobeJson ) AjaxResponse::criticalDie("Missing sourceFfprobeJson");
+		if( !isset($params->mute) ) AjaxResponse::criticalDie("Missing mute");
+		$mute = $params->mute;
+
+		if( !$probeResult = new FFProbeResult($sourceFfprobeJson) ) AjaxResponse::criticalDie("Error reading source ffprobe json");
+
+		CDNTools::getEncodingSettings(
+			$probeResult, $fileSizeBytes, $maxSizeBytes, $versionWidth, $versionHeight, $targetBitRate, $hlsByteSizeThreshold,
+			$constrainWidth, $constrainHeight, $passThroughVideo, $saveAsHls
+		);
+
+		// Start new job
+		$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $versionWidth, $versionHeight, new TranscodingJobSettings(
+			$targetBitRate,
+			$constrainWidth,
+			$constrainHeight,
+			$passThroughVideo,
+			$saveAsHls,
+			null,
+			$mute
+		));
+
+		if( $tcJob->sourceVideoExistsOnDisk() ) {
+
+			// Start transcoding now
+			$tcJob->startTranscode();
+
+			AjaxResponse::returnSuccess([
+				'progressToken' => $tcJob->progressToken
+			]);
+
+		} else {
+
+			// Get source video from cloud
+			$tcJob->createInProgressDir();
+
+			AjaxResponse::returnSuccessPersist([
+				'progressToken' => $tcJob->progressToken
+			]);
+
+			// Start transcoding in the background
+			$client = new Client(Config::get('b2_master_key_id'), [
+				'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
+				'applicationKey' => Config::get('b2_application_key'),
+			]);
+			$client->version = 2; // By default will use version 1
+
+			if( !$client->download([
+				'BucketName' => Config::get('b2_bucket_name'),
+				'FileName' => $tcJob->getSrcCloudPath(),
+				'SaveAs' => $tcJob->inProgressPath()
+			])) {
+
+				// fuck TODO: handle errors
+
+			};
+
+		}
 
 		break;
 

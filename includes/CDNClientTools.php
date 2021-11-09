@@ -27,6 +27,7 @@ class CDNClient {
 	const CLIENT_ACTION_INIT_SERVER = 'initServer';
 	const CLIENT_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
 	const CLIENT_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
+	const CLIENT_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
 
 	public static function postToHub( $action, $params = array(), $options = array() ) {
 
@@ -376,6 +377,55 @@ class CDNTools {
 		} else {
 
 			return $obj;
+
+		}
+
+	}
+
+	public static function getEncodingSettings(
+		FFProbeResult $probeResult, $fileSizeBytes, $maxSizeBytes, $targetWidth, $targetHeight, $targetBitRate, $hlsByteSizeThreshold,
+		&$constrainWidth, &$constrainHeight, &$passThroughVideo, &$saveAsHls
+	) {
+
+		/** @var FFProbeResult_VideoStream */
+		if( !$videoStream = $probeResult->videoStreams[0] ) {
+
+			AjaxResponse::returnError("Invalid video file.");
+
+		}
+
+		// Video encoding settings
+		$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
+		$passThroughVideo = $fileSizeBytes <= $maxSizeBytes && $videoStream->codecName === 'h264';
+
+		// Determine constraining width/height
+		$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
+		$targetAspectRatio = $targetWidth / $targetHeight;
+
+		if( $uploadedAspectRatio > $targetAspectRatio ) {
+
+			// Uploaded video is "wider" (proportionally) than the target dimensions
+			$constrainWidth = $targetWidth * 2; // 2x resolution
+			$constrainHeight = -2;
+
+		} else {
+
+			// Uploaded video is "taller" (proportionally) than the target dimensions
+			$constrainWidth = -2;
+			$constrainHeight = $targetHeight * 2; // 2x resolution
+
+		}
+		
+		if( $passThroughVideo && $fileSizeBytes < $hlsByteSizeThreshold ) {
+
+			// Don't need to save as HLS if we can passthrough and we're under the HLS byte size threshold
+			$saveAsHls = false;
+
+		} else {
+
+			$passThroughVideo = false;
+
+			$saveAsHls = $targetSizeBytes >= $hlsByteSizeThreshold;
 
 		}
 
@@ -765,6 +815,12 @@ class TranscodingJob {
 
 	}
 
+	public function sourceVideoExistsOnDisk() {
+
+		return file_exists($this->inProgressPath());
+
+	}
+
 	public function wwwDir() {
 
 		global $root_path;
@@ -839,7 +895,7 @@ class TranscodingJob {
 
 	}
 
-	public function moveUploadedFile($tmpFile) {
+	public function createInProgressDir() {
 
 		$dir = $this->inProgressDir();
 		if( !is_dir($dir) ) {
@@ -852,7 +908,13 @@ class TranscodingJob {
 			
 		}
 
-		if( file_exists($this->inProgressPath()) ) return true;
+	}
+
+	public function moveUploadedFile($tmpFile) {
+
+		if( $this->sourceVideoExistsOnDisk() ) return true;
+
+		$this->createInProgressDir();
 
 		return move_uploaded_file($tmpFile, $this->inProgressPath());
 

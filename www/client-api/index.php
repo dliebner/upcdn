@@ -140,6 +140,13 @@ switch( $action ) {
 
 			AjaxResponse::returnSuccess($ret);
 
+		} else if( !$job->transcodeStarted ) {
+
+			AjaxResponse::returnSuccess([
+				"isFinished" => false,
+				"pctComplete" => 0,
+			]);
+
 		} else {
 
 			$pctComplete = $job->getPercentComplete($isFinished, $execResult, $dockerOutput);
@@ -155,7 +162,7 @@ switch( $action ) {
 
 			AjaxResponse::returnSuccess([
 				"isFinished" => false,
-				"pctComplete" => $pctComplete
+				"pctComplete" => $pctComplete,
 			]);
 
 		}
@@ -237,7 +244,6 @@ switch( $action ) {
 			$targetHeight = $responseData['height'];
 			$mute = (bool)$responseData['mute'];
 			$hlsByteSizeThreshold = $responseData['hlsByteSizeThreshold'];
-			$passThroughVideo = $fileSizeBytes <= $maxSizeBytes && $videoStream->codecName === 'h264';
 
 			// Source video info
 			$sourceHasAudio = $probeResult->hasAudio();
@@ -248,32 +254,10 @@ switch( $action ) {
 			$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
 			$targetAspectRatio = $targetWidth / $targetHeight;
 
-			if( $uploadedAspectRatio > $targetAspectRatio ) {
-
-				// Uploaded video is "wider" (proportionally) than the target dimensions
-				$constrainWidth = $targetWidth * 2; // 2x resolution
-				$constrainHeight = -2;
-
-			} else {
-
-				// Uploaded video is "taller" (proportionally) than the target dimensions
-				$constrainWidth = -2;
-				$constrainHeight = $targetHeight * 2; // 2x resolution
-
-			}
-			
-			if( $passThroughVideo && $fileSizeBytes < $hlsByteSizeThreshold ) {
-
-				// Don't need to save as HLS if we can passthrough and we're under the HLS byte size threshold
-				$saveAsHls = false;
-
-			} else {
-
-				$passThroughVideo = false;
-
-				$saveAsHls = $targetSizeBytes >= $hlsByteSizeThreshold;
-
-			}
+			CDNTools::getEncodingSettings(
+				$probeResult, $fileSizeBytes, $maxSizeBytes, $targetWidth, $targetHeight, $targetBitRate, $hlsByteSizeThreshold,
+				$constrainWidth, $constrainHeight, $passThroughVideo, $saveAsHls
+			);
 
 			if( !($passThroughVideo || $probeResult->duration <= $maxDuration) ) {
 

@@ -30,7 +30,6 @@ if( $cronProcessing && Config::loadConfig(true) && Config::get('cron_cloud_uploa
 // Here is where we start the actual processing
 //
 use dliebner\B2\Client;
-use dliebner\B2\AsyncUploadFileResult;
 use dliebner\B2\ParallelUploader;
 
 // Make sure to clear cron_cloud_upload_start on exit
@@ -69,7 +68,7 @@ while( time() - $maxWaitTime < $start ) {
 
 		$getClient();
 
-		$bucketId = $client->getBucketFromName('bidglass-creatives')->getId();
+		$bucketId = $client->getBucketFromName(Config::get('b2_bucket_name'))->getId();
 		$pup = new ParallelUploader($client, $bucketId);
 		$pup->numUploadLanes = TranscodingJob::CLOUD_UPLOAD_MAX_CONCURRENT;
 
