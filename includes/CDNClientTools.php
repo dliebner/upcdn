@@ -131,7 +131,7 @@ class CDNClient {
 			'sourceHasAudio' => $sourceHasAudio,
 			'sourceSizeBytes' => $sourceSizeBytes,
 			'duration' => $duration,
-			'ffprobeResultJson' => json_encode($ffprobeResultJson),
+			'ffprobeResultJson' => $ffprobeResultJson,
 			'sha1' => $sha1
 		],[
 			'success' => function($response) use (&$success, &$hubResponseDataArray) {
