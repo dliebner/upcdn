@@ -653,7 +653,7 @@ class FFProbeResult {
 
 		if( is_string($json) ) $json = json_decode($json, true);
 		if( is_object($json) ) $json = CDNTools::objectToArrayRecursive($json);
-		if( !is_array($json) ) throw new Exception("Error constructing FFProbeResult from \$json");
+		if( !is_array($json) ) throw new Exception("Error constructing FFProbeResult from \$json: " . print_r($json, 1));
 		if( !$format = $json['format'] ) throw new Exception("Error reading format");
 		if( !$streams = $json['streams'] ) throw new Exception("Error reading streams");
 
