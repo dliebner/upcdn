@@ -1100,9 +1100,10 @@ class TranscodingJob {
 			);
 
 			$i = 0;
-			foreach ($files as $file) {
+			foreach( $files as $file ) {
+
 				// Skip directories (they would be added automatically)
-				if (!$file->isDir()) {
+				if( !$file->isDir() ) {
 
 					// Count size in bytes
 					$totalSizeBytes += $file->getSize();
@@ -1117,7 +1118,9 @@ class TranscodingJob {
 					// Add current file to archive
 					$zip->addFile($filePath, $relativePath);
 					$zip->setCompressionIndex($i++, ZipArchive::CM_STORE);
+
 				}
+
 			}
 
 			// Zip archive will be created only after closing object
@@ -1134,9 +1137,9 @@ class TranscodingJob {
 				RecursiveIteratorIterator::LEAVES_ONLY
 			);
 
-			foreach ($files as $file) {
+			foreach( $files as $file ) {
 
-				if( !$file->isDir()) {
+				if( !$file->isDir() ) {
 
 					// Set video file to probe
 					if( !$probeVideoFile && $file->getExtension() === 'mp4' ) $probeVideoFile = $file->getRealPath();
@@ -1147,6 +1150,14 @@ class TranscodingJob {
 				}
 
 			}
+
+		}
+
+		if( !$probeVideoFile ) {
+
+			throw new GeneralExceptionWithData("Did not find a video file to probe", [
+				'basePath' => $basePath
+			]);
 
 		}
 
