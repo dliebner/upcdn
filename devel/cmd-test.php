@@ -6,6 +6,6 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
-$tJob = TranscodingJob::getById(28);
+$tJob = TranscodingJob::getById(64);
 
-$tJob->startTranscode();
+$tJob->finishTranscode();
