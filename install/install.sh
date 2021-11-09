@@ -94,8 +94,9 @@ sudo sed -i 's/^supervised no$/supervised systemd/g' /etc/redis/redis.conf
 
 # install php-redis
 pecl install redis
-echo "extension=redis.so" | sudo tee /etc/php/7.4/mods-available/20-redis.ini > /dev/null
-sudo ln -s /etc/php/7.4/mods-available/20-redis.ini /etc/php/7.4/fpm/conf.d/
+echo "extension=redis.so" | sudo tee /etc/php/7.4/mods-available/redis.ini > /dev/null
+sudo ln -s /etc/php/7.4/mods-available/redis.ini /etc/php/7.4/fpm/conf.d/20-redis.ini
+sudo ln -s /etc/php/7.4/mods-available/redis.ini /etc/php/7.4/cli/conf.d/20-redis.ini
 
 # switch to mpm_worker
 sudo a2dismod mpm_prefork
