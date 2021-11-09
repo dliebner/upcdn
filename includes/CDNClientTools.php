@@ -430,6 +430,51 @@ class CDNTools {
 		}
 
 	}
+
+	/**
+	 * Recursively delete a directory and all of it's contents - e.g.the equivalent of `rm -r` on the command-line.
+	 * Consistent with `rmdir()` and `unlink()`, an E_WARNING level error will be generated on failure.
+	 *
+	 * @param string $source absolute path to directory or file to delete.
+	 * @param bool 	 $removeOnlyChildren set to true will only remove content inside directory.
+	 *
+	 * @return bool true on success; false on failure
+	 */
+	public static function rrmdir($source, $removeOnlyChildren = false) {
+
+		if( empty($source) || file_exists($source) === false ) return false;
+
+		if( is_file($source) || is_link($source) ) return unlink($source);
+
+		/** @var SplFileInfo[] $files */
+		$files = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+
+		foreach( $files as $file ) {
+
+			if( $file->isDir() ) {
+
+				if( self::rrmdir($file->getRealPath()) === false ) return false;
+
+			} else {
+
+				if( unlink($file->getRealPath()) === false ) return false;
+
+			}
+
+		}
+
+		if( $removeOnlyChildren === false ) {
+
+			return rmdir($source);
+			
+		}
+
+		return true;
+
+	}
 	
 }
 
@@ -809,6 +854,12 @@ class TranscodingJob {
 
 	}
 
+	public function deleteInProgressFolder() {
+
+		return CDNTools::rrmdir( $this->inProgressDir() );
+
+	}
+
 	public function inProgressPath() {
 
 		return $this->inProgressDir() . $this->srcFilename;
@@ -848,6 +899,28 @@ class TranscodingJob {
 			return false;
 
 		}
+
+	}
+
+	public static function getAllBySrcFilename($srcFilename) {
+
+		$db = db();
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE src_filename = '" . original_to_query($srcFilename) . "'";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		$jobs = [];
+
+		while( $row = $db->sql_fetchrow($result) ) {
+
+			$jobs[] = new self($row);
+
+		}
+
+		return $jobs;
 
 	}
 
@@ -1267,13 +1340,39 @@ class TranscodingJob {
 		
 		$db = db();
 
-		$sql = "DELETE
+		$sql = "SELECT *
 			FROM transcoding_jobs
 			WHERE job_finished < NOW() - INTERVAL 1 HOUR";
 
-		if( !$db->sql_query($sql) ) {
+		if( !$result = $db->sql_query($sql) ) {
 
-			throw new QueryException("Error deleting", $sql);
+			throw new QueryException("Error selecting", $sql);
+
+		}
+
+		$deleteIds = [];
+
+		while( $row = $db->sql_fetchrow($result) ) {
+
+			$job = new self($row);
+			$job->deleteInProgressFolder();
+
+			$deleteIds[] = (int)$job->id;
+
+		}
+
+		if( $deleteIds ) {
+
+			$sql = "DELETE FROM transcoding_jobs
+				WHERE id IN (" . implode(",", $deleteIds) . ")";
+
+			if( !$db->sql_query($sql) ) {
+
+				throw new QueryException("Error deleting", $sql);
+
+			}
+
+			return true;
 
 		}
 

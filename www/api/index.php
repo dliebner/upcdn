@@ -173,6 +173,8 @@ switch( $payload->action ) {
 
 			};
 
+			$tcJob->startTranscode();
+
 		}
 
 		break;
