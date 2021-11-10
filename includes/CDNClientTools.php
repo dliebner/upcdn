@@ -1208,7 +1208,7 @@ class TranscodingJob {
 
 			if( !file_exists($filePath) ) {
 
-				throw new GeneralExceptionWithData("Could not find video file", [
+				throw new GeneralExceptionWithData("Could not find video file $filePath", [
 					'basePath' => $basePath
 				]);
 
