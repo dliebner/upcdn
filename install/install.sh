@@ -104,6 +104,8 @@ sudo a2enmod mpm_worker
 
 # create bgcdn user
 sudo useradd -m -s /bin/bash bgcdn
+# add bgcdn user to www-data group
+sudo usermod -a -G www-data bgcdn
 
 # install composer
 ./install-composer.sh
