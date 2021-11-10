@@ -1204,7 +1204,7 @@ class TranscodingJob {
 
 			// Just get size
 			$basePath = realpath($this->wwwDir());
-			$filePath = $probeVideoFile = $basePath . $this->versionFilename . '.mp4';
+			$filePath = $probeVideoFile = $basePath . '/' . $this->versionFilename . '.mp4';
 
 			if( !file_exists($filePath) ) {
 
