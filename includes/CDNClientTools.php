@@ -902,6 +902,7 @@ class TranscodingJob {
 
 	}
 
+	/** @return TranscodingJob[] */
 	public static function getAllBySrcFilename($srcFilename) {
 
 		$db = db();

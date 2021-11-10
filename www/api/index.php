@@ -148,10 +148,31 @@ switch( $payload->action ) {
 			]);
 
 		} else {
-
-			// Get source video from cloud
+			
 			$tcJob->createInProgressDir();
 
+			// Check if source exists from other jobs
+			foreach( TranscodingJob::getAllBySrcFilename($tcJob->srcFilename) as $otherJob ) {
+
+				if( $otherJob->id === $tcJob->id ) continue;
+
+				if( $otherJob->sourceVideoExistsOnDisk() ) {
+
+					// Copy source video to new job's inProgressPath
+					copy($otherJob->inProgressPath(), $tcJob->inProgressPath());
+
+					// Start transcoding now
+					$tcJob->startTranscode();
+		
+					AjaxResponse::returnSuccess([
+						'progressToken' => $tcJob->progressToken
+					]);
+
+				}
+
+			}
+
+			// Get source video from cloud
 			AjaxResponse::returnSuccessPersist([
 				'progressToken' => $tcJob->progressToken
 			]);
