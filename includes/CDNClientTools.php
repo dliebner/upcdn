@@ -1204,26 +1204,17 @@ class TranscodingJob {
 
 			// Just get size
 			$basePath = realpath($this->wwwDir());
+			$filePath = $probeVideoFile = $basePath . $this->versionFilename . '.mp4';
 
-			/** @var SplFileInfo[] $files */
-			$files = new RecursiveIteratorIterator(
-				new RecursiveDirectoryIterator($basePath),
-				RecursiveIteratorIterator::LEAVES_ONLY
-			);
+			if( !file_exists($filePath) ) {
 
-			foreach( $files as $file ) {
-
-				if( !$file->isDir() ) {
-
-					// Set video file to probe
-					if( !$probeVideoFile && $file->getExtension() === 'mp4' ) $probeVideoFile = $file->getRealPath();
-
-					// Count size in bytes
-					$totalSizeBytes += $file->getSize();
-
-				}
+				throw new GeneralExceptionWithData("Could not find video file", [
+					'basePath' => $basePath
+				]);
 
 			}
+
+			$totalSizeBytes = filesize($filePath);
 
 		}
 
