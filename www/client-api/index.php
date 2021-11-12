@@ -316,6 +316,7 @@ switch( $action ) {
 
 			}
 
+			$tcJob->setTranscodeReady();
 			$tcJob->startTranscode();
 
 			// In-progress

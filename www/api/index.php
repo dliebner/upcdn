@@ -141,6 +141,7 @@ switch( $payload->action ) {
 		if( $tcJob->sourceVideoExistsOnDisk() ) {
 
 			// Start transcoding now
+			$tcJob->setTranscodeReady();
 			$tcJob->startTranscode();
 
 			AjaxResponse::returnSuccess([
@@ -162,6 +163,7 @@ switch( $payload->action ) {
 					copy($otherJob->inProgressPath(), $tcJob->inProgressPath());
 
 					// Start transcoding now
+					$tcJob->setTranscodeReady();
 					$tcJob->startTranscode();
 		
 					AjaxResponse::returnSuccess([
@@ -194,6 +196,7 @@ switch( $payload->action ) {
 
 			};
 
+			$tcJob->setTranscodeReady();
 			$tcJob->startTranscode();
 
 		}

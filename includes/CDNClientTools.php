@@ -969,6 +969,28 @@ class TranscodingJob {
 
 	}
 
+	public static function numActiveTranscodingJobs() {
+
+		$db = db();
+
+		$sql = "SELECT COUNT(*) as count
+			FROM transcoding_jobs
+			WHERE transcode_is_active = 1";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		$row = $db->sql_fetchrow($result);
+
+		return (int)$row['count'];
+
+	}
+
+	public static function canStartTranscodingJob() {
+
+		return self::numActiveTranscodingJobs() < Config::get('transcode_job_limit');
+
+	}
+
 	public function createInProgressDir() {
 
 		$dir = $this->inProgressDir();
@@ -994,7 +1016,48 @@ class TranscodingJob {
 
 	}
 
+	public function setTranscodeReady() {
+
+		$sql = "UPDATE transcoding_jobs
+			SET transcode_ready = 1
+			WHERE id = " . (int)$this->id;
+
+		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+	}
+
+	/** @return TranscodingJob[] */
+	public static function getUnstartedTranscodeJobs() {
+
+		$db = db();
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE transcode_ready = 1
+			AND transcode_is_active = 0
+			LIMIT 1";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		$jobs = [];
+
+		while( $row = $db->sql_fetchrow($result) ) {
+
+			$jobs[] = new self($row);
+
+		}
+
+		return $jobs;
+
+	}
+
 	public function startTranscode() {
+
+		// Can we start a transcoding job now?
+		if( !self::canStartTranscodingJob() ) return false;
+
+		// Claim job
+		if( !$this->setTranscodeStarted() ) return;
 
 		// Required
 		if( !$dir = realpath($this->inProgressDir()) ) throw new Exception("Error getting absolute path");
@@ -1011,6 +1074,7 @@ class TranscodingJob {
 	
 			if( !mkdir_recursive($outDir, 0775)) {
 				
+				$this->unsetTranscodeStarted();
 				throw new Exception("Could not create output dir.");
 				
 			}
@@ -1060,6 +1124,8 @@ class TranscodingJob {
 			}
 
 		}
+
+		$this->unsetTranscodeStarted();
 
 		throw new GeneralExceptionWithData("Error starting job", [
 			'cmd' => $cmd,
@@ -1253,7 +1319,38 @@ class TranscodingJob {
 
 		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
 
+		// Start any pending transcoding jobs if possible
+		foreach( self::getUnstartedTranscodeJobs() as $job ) {
+
+			if( $job->startTranscode() === false ) break;
+
+		}
+
 		return true;
+
+	}
+
+	public function setTranscodeStarted() {
+
+		$db = db();
+
+		$sql = "UPDATE transcoding_jobs
+			SET transcode_started = CASE WHEN transcode_started IS NULL THEN NOW() ELSE transcode_started END
+			WHERE id = " . (int)$this->id;
+
+		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+		return $db->sql_affectedrows() > 0;
+
+	}
+
+	public function unsetTranscodeStarted() {
+
+		$sql = "UPDATE transcoding_jobs
+			SET transcode_started = NULL
+			WHERE id = " . (int)$this->id;
+
+		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
 
 	}
 
