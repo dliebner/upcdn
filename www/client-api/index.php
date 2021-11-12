@@ -139,7 +139,7 @@ switch( $action ) {
 
 		}
 
-		if( !$jobsByPt = TranscodingJob::getAllByProgressTokens($progressToken) ) {
+		if( !$jobsByPt = TranscodingJob::getAllByProgressTokens($progressTokens) ) {
 
 			AjaxResponse::returnError("Invalid progress tokens.");
 
