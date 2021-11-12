@@ -117,55 +117,88 @@ switch( $action ) {
 
 	case 'upload-progress':
 
-		$progressToken = postdata_to_original($_POST['progressToken']);
+		$progressTokens = postdata_to_original($_POST['progressTokens']);
 
-		if( !$job = TranscodingJob::getByProgressToken($progressToken) ) {
+		if( !$progressTokens = array_filter(
+			array_map(
+				function($pt) { 
+			
+					return trim($pt);
 
-			AjaxResponse::returnError("Invalid progress token.");
+				},
+				explode(",", $progressTokens)
+			), function($pt) {
+
+				// Not-empty
+				return strlen($pt);
+
+			})
+		) {
+
+			AjaxResponse::returnError("Invalid progress tokens.");
 
 		}
 
-		if( $job->transcodeFinished ) {
+		if( !$jobsByPt = TranscodingJob::getAllByProgressTokens($progressToken) ) {
+
+			AjaxResponse::returnError("Invalid progress tokens.");
+
+		}
+
+		$returnProgressTokens = [];
+		foreach( $jobsByPt as $pt => $job ) {
 
 			$ret = [
-				"isFinished" => true,
-				"pctComplete" => 1
+				'progressToken' => $pt
 			];
 
-			if( $job->data['hub_return_meta'] ) {
+			if( $job->transcodeFinished ) {
 
-				$ret['meta'] = json_decode($job->data['hub_return_meta']);
+				$ret += [
+					"isFinished" => true,
+					"pctComplete" => 1
+				];
+
+				if( $job->data['hub_return_meta'] ) {
+
+					$ret['meta'] = json_decode($job->data['hub_return_meta']);
+
+				}
+
+			} else if( !$job->transcodeStarted ) {
+
+				$ret += [
+					"isFinished" => false,
+					"pctComplete" => 0,
+				];
+
+			} else {
+
+				$pctComplete = $job->getPercentComplete($isFinished, $execResult, $dockerOutput);
+
+				if( $pctComplete === false ) {
+
+					AjaxResponse::returnError("There was an error transcoding the video.", debugEnabled() ? [
+						'execResult' => $execResult,
+						'dockerOutput' => $dockerOutput,
+					] : null);
+
+				}
+
+				$ret += [
+					"isFinished" => false,
+					"pctComplete" => $pctComplete,
+				];
 
 			}
 
-			AjaxResponse::returnSuccess($ret);
-
-		} else if( !$job->transcodeStarted ) {
-
-			AjaxResponse::returnSuccess([
-				"isFinished" => false,
-				"pctComplete" => 0,
-			]);
-
-		} else {
-
-			$pctComplete = $job->getPercentComplete($isFinished, $execResult, $dockerOutput);
-
-			if( $pctComplete === false ) {
-
-				AjaxResponse::returnError("There was an error transcoding the video.", debugEnabled() ? [
-					'execResult' => $execResult,
-					'dockerOutput' => $dockerOutput,
-				] : null);
-
-			}
-
-			AjaxResponse::returnSuccess([
-				"isFinished" => false,
-				"pctComplete" => $pctComplete,
-			]);
+			$returnProgressTokens[] = $ret;
 
 		}
+
+		AjaxResponse::returnSuccess([
+			'progressTokens' => $returnProgressTokens
+		]);
 
 		break;
 

@@ -925,6 +925,39 @@ class TranscodingJob {
 
 	}
 
+	public static function getAllByProgressTokens(array $progressTokens) {
+
+		if( !$progressTokens ) return [];
+
+		$db = db();
+
+		$in = [];
+		foreach( $progressTokens as $pt ) {
+
+			$in[] = "'" . original_to_query($pt) . "'";
+
+		}
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE progress_token IN (" . implode(",", $in) . ")";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		$jobs = [];
+
+		while( $row = $db->sql_fetchrow($result) ) {
+
+			$job = new self($row);
+
+			$jobs[$job->progressToken] = $job;
+
+		}
+
+		return $jobs;
+
+	}
+
 	public static function getByProgressToken($progressToken) {
 
 		$db = db();
