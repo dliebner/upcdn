@@ -1052,10 +1052,64 @@ class TranscodingJob {
 	public function setTranscodeReady() {
 
 		$sql = "UPDATE transcoding_jobs
-			SET transcode_ready = 1
+			SET transcode_ready = 1,
+				flag_cloud_download_src = 0
 			WHERE id = " . (int)$this->id;
 
 		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+	}
+
+	public function queueSourceDownload() {
+
+		$sql = "UPDATE transcoding_jobs
+			SET flag_cloud_download_src = 1
+			WHERE id = " . (int)$this->id;
+
+		if( !db()->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+	}
+
+	/** @return TranscodingJob[] */
+	public static function getSourceDownloadJobs() {
+
+		$db = db();
+
+		$sql = "SELECT *
+			FROM transcoding_jobs
+			WHERE flag_cloud_download_src = 1
+			AND cloud_download_src_in_progress = 0";
+
+		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
+
+		$jobs = [];
+
+		while( $row = $db->sql_fetchrow($result) ) {
+
+			$jobs[] = new self($row);
+
+		}
+
+		return $jobs;
+
+	}
+
+	public static function setCloudDownloadSrcInProgress(array $jobs, $inProgress = true) {
+
+		if( !$jobs ) return;
+
+		$sql = "UPDATE transcoding_jobs
+			SET cloud_download_src_in_progress = " . ($inProgress ? "1" : "0") . "
+			WHERE id IN (" . implode(
+				",",
+				array_map(function($job) {
+
+					return (int)$job->id;
+
+				}, $jobs)
+			) . ")";
+
+		if( !db()->sql_query($sql) ) throw new QueryException("Error updating transcoding_jobs", $sql);
 
 	}
 
@@ -1067,8 +1121,7 @@ class TranscodingJob {
 		$sql = "SELECT *
 			FROM transcoding_jobs
 			WHERE transcode_ready = 1
-			AND transcode_is_active = 0
-			LIMIT 1";
+			AND transcode_is_active = 0";
 
 		if( !$result = $db->sql_query($sql) ) throw new QueryException("Error selecting from transcoding_jobs", $sql);
 
@@ -1372,6 +1425,8 @@ class TranscodingJob {
 			WHERE id = " . (int)$this->id;
 
 		if( !$db->sql_query($sql) ) throw new QueryException("Error updating", $sql);
+
+		$this->transcodeStarted = $this->transcodeStarted ?: new DateTime();
 
 		return $db->sql_affectedrows() > 0;
 
@@ -1754,6 +1809,65 @@ class TranscodingJob {
 		}
 
 		return false;
+
+	}
+
+}
+
+class Cron {
+
+	public static function downloadSourcesFromCloud() {
+		
+		$client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
+			'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
+			'applicationKey' => Config::get('b2_application_key'),
+		]);
+		$client->version = 2; // By default will use version 1
+
+		$downloader = new \dliebner\B2\ParallelDownloader($client, 10);
+
+		if( $jobs = TranscodingJob::getSourceDownloadJobs() ) {
+
+			TranscodingJob::setCloudDownloadSrcInProgress($jobs);
+
+			foreach( $jobs as $tcJob ) {
+
+				$downloader->addFileToDownload([
+					'tcJob' => $tcJob,
+					'BucketName' => Config::get('b2_bucket_name'),
+					'FileName' => $tcJob->getSrcCloudPath(),
+					'SaveAs' => $tcJob->inProgressPath()
+				]);
+
+			}
+
+			$downloader->doDownload();
+
+			foreach( $downloader->getAllFailedFiles() as $failedFileOptions ) {
+
+				/** @var TranscodingJob $tcJob */
+				$tcJob = $failedFileOptions['tcJob'];
+
+			}
+
+			$downloadedFiles = $downloader->getAllDownloadedFiles();
+
+			foreach( $downloadedFiles as $downloadFileResult ) {
+
+				$fileOptions = $downloadFileResult->originalFileOptions;
+				/** @var TranscodingJob $tcJob */
+				$tcJob = $fileOptions['tcJob'];
+
+				$tcJob->setTranscodeReady();
+				$tcJob->startTranscode();
+
+			}
+
+			TranscodingJob::setCloudDownloadSrcInProgress($jobs, false);
+
+			if( $downloadedFiles ) return true;
+
+		}
 
 	}
 
