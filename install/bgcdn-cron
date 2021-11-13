@@ -12,7 +12,7 @@
 * * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/cloud-upload-queue.php
 
 # Second cron
-#* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/second.php
+* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/second.php
 
 # Minute cron
 * * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/minute.php

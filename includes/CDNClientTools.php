@@ -925,6 +925,7 @@ class TranscodingJob {
 
 	}
 
+	/** @return TranscodingJob[] */
 	public static function getAllByProgressTokens(array $progressTokens) {
 
 		if( !$progressTokens ) return [];
@@ -1769,6 +1770,8 @@ class TranscodingJob {
 	}
 
 	public function getPercentComplete(&$isFinished = false, &$execResult = null, &$dockerOutput = null) {
+
+		if( !$this->dockerContainerId ) return 0;
 
 		$containerId = escapeshellarg($this->dockerContainerId);
 
