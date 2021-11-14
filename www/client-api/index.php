@@ -237,8 +237,6 @@ switch( $action ) {
 
 		if( !$versions = $responseData['versions'] ) throw new GeneralExceptionWithData("Missing versions in validateCdnToken response.", $responseData);
 
-		print_r($versions); exit;
-
 		// Get uploaded file data
 		$originalFilename = $_FILES['image']['name'];
 		$originalExtension = pathinfo($originalFilename, PATHINFO_EXTENSION) ?: null;
