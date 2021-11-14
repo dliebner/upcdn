@@ -235,11 +235,9 @@ switch( $action ) {
 		$meta = $responseData['meta'];
 		if( is_array($responseData['returnMeta']) ) $returnMeta = $responseData['returnMeta'] + $returnMeta;
 
-		// Validate video file
-		$fileUploadLimit = $responseData['fileUploadLimit'];
-		$maxSizeBytes = $responseData['maxSizeBytes'];
-		$maxDuration = $responseData['maxDuration'];
+		if( !$versions = $responseData['versions'] ) throw new GeneralExceptionWithData("Missing versions in validateCdnToken response.", $responseData);
 
+		// Get uploaded file data
 		$originalFilename = $_FILES['image']['name'];
 		$originalExtension = pathinfo($originalFilename, PATHINFO_EXTENSION) ?: null;
 		$tmpFile = $_FILES['image']['tmp_name'];
@@ -251,10 +249,21 @@ switch( $action ) {
 		}
 
 		$fileSizeBytes = filesize($tmpFile);
+		
+		// Validate video file
+		$fileUploadLimit = $responseData['fileUploadLimit'];
 
 		if( $fileSizeBytes > $fileUploadLimit ) {
 
 			AjaxResponse::returnError("Max file size: " . humanFilesize($fileUploadLimit));
+
+		}
+
+		// Get lowest maxDuration
+		$minMaxDuration = null;
+		foreach( $versions as $version ) {
+
+			if( !$minMaxDuration || $version['maxDuration'] < $minMaxDuration ) $minMaxDuration = $version['maxDuration'];
 
 		}
 
@@ -269,32 +278,34 @@ switch( $action ) {
 
 			}
 
-			// Video encoding settings
-			$targetBitRate = $responseData['bitRate'];
-			$duration = $probeResult->duration;
-			$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
-			$targetWidth = $responseData['width'];
-			$targetHeight = $responseData['height'];
-			$mute = (bool)$responseData['mute'];
-			$hlsByteSizeThreshold = $responseData['hlsByteSizeThreshold'];
-
 			// Source video info
+			$duration = $probeResult->duration;
 			$sourceHasAudio = $probeResult->hasAudio();
 			$sourceWidth = $videoStream->displayWidth();
 			$sourceHeight = $videoStream->displayHeight();
 
-			// Determine constraining width/height
-			$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
-			$targetAspectRatio = $targetWidth / $targetHeight;
+			foreach( $versions as $version ) {
 
-			CDNTools::getEncodingSettings(
-				$probeResult, $fileSizeBytes, $maxSizeBytes, $targetWidth, $targetHeight, $targetBitRate, $hlsByteSizeThreshold,
-				$constrainWidth, $constrainHeight, $passThroughVideo, $saveAsHls
-			);
+				// Video encoding settings
+				$maxSizeBytes = $version['maxSizeBytes'];
+				$maxDuration = $version['maxDuration'];
+				$targetBitRate = $version['bitRate'];
+				$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
+				$targetWidth = $version['width'];
+				$targetHeight = $version['height'];
+				$mute = (bool)$version['mute'];
+				$hlsByteSizeThreshold = $version['hlsByteSizeThreshold'];
 
-			if( !($passThroughVideo || $probeResult->duration <= $maxDuration) ) {
+				CDNTools::getEncodingSettings(
+					$probeResult, $fileSizeBytes, $maxSizeBytes, $targetWidth, $targetHeight, $targetBitRate, $hlsByteSizeThreshold,
+					$constrainWidth, $constrainHeight, $passThroughVideo, $saveAsHls
+				);
 
-				AjaxResponse::returnError("Video must be under " . floor($maxDuration) . " seconds long.");
+				if( !($passThroughVideo || $probeResult->duration <= $maxDuration) ) {
+
+					AjaxResponse::returnError("Video must be under " . floor($minMaxDuration) . " seconds long.");
+
+				}
 
 			}
 
@@ -318,43 +329,85 @@ switch( $action ) {
 			
 			if( is_array($hubResponseDataArray['returnMeta']) ) $returnMeta = $hubResponseDataArray['returnMeta'] + $returnMeta;
 
-			if( $hubResponseDataArray['versionExists'] ) {
+			// Existing versions
+			$existingVersions = $hubResponseDataArray['existingVersions'];
 
+			// Missing versions
+			$missingVersions = $hubResponseDataArray['missingVersions'];
+
+			if( $existingVersions && !$missingVersions ) {
+
+				// All versions exist
 				AjaxResponse::returnSuccess([
-					'versionExists' => true,
+					'existingVersions' => $existingVersions,
 					'meta' => $returnMeta
 				]);
 
 			}
 
-			$sourceFilename = $hubResponseDataArray['sourceFilename'];
-			$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
-			$versionFilename = $hubResponseDataArray['versionFilename'];
+			$movedUploadedFile = false;
+			$progressTokens = [];
+			foreach( $missingVersions as $version ) {
 
-			// Start new job
-			$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
-				$targetBitRate,
-				$constrainWidth,
-				$constrainHeight,
-				$passThroughVideo,
-				$saveAsHls,
-				null,
-				$mute
-			));
+				$sourceFilename = $hubResponseDataArray['sourceFilename'];
+				$sourceIsNew = $hubResponseDataArray['sourceIsNew'];
+				$versionFilename = $version['versionFilename'];
 
-			// Move file to in-progress folder (/home/bgcdn/transcoding)
-			if( !$tcJob->moveUploadedFile($tmpFile) ) {
+				$encodingSettings = $version['encodingSettings'];
+				$maxSizeBytes = $encodingSettings['maxSizeBytes'];
+				$maxDuration = $encodingSettings['maxDuration'];
+				$targetBitRate = $encodingSettings['bitRate'];
+				$targetSizeBytes = ceil($targetBitRate * $probeResult->duration / 8);
+				$targetWidth = $encodingSettings['width'];
+				$targetHeight = $encodingSettings['height'];
+				$mute = (bool)$encodingSettings['mute'];
+				$hlsByteSizeThreshold = $encodingSettings['hlsByteSizeThreshold'];
 
-				AjaxResponse::returnError("Error preparing transcoding job.");
+				CDNTools::getEncodingSettings(
+					$probeResult, $fileSizeBytes, $maxSizeBytes, $targetWidth, $targetHeight, $targetBitRate, $hlsByteSizeThreshold,
+					$constrainWidth, $constrainHeight, $passThroughVideo, $saveAsHls
+				);
+
+				// Start new job
+				$tcJob = TranscodingJob::create($sourceFilename, $sourceIsNew, $originalExtension, $fileSizeBytes, $duration, $versionFilename, $targetWidth, $targetHeight, new TranscodingJobSettings(
+					$targetBitRate,
+					$constrainWidth,
+					$constrainHeight,
+					$passThroughVideo,
+					$saveAsHls,
+					null,
+					$mute
+				));
+
+				// Can't move uploaded file twice; save job the moved it first, then copy
+				if( !$movedUploadedFile ) {
+
+					// Move file to in-progress folder (/home/bgcdn/transcoding)
+					if( !$tcJob->moveUploadedFile($tmpFile) ) {
+
+						AjaxResponse::returnError("Error preparing transcoding job.");
+
+					}
+
+					$movedUploadedFile = $tcJob;
+
+				} else {
+
+					// Copy source video to new job's inProgressPath
+					copy($movedUploadedFile->inProgressPath(), $tcJob->inProgressPath());
+
+				}
+
+				$tcJob->setTranscodeReady();
+				$tcJob->startTranscode();
+
+				$progressTokens[] = $tcJob->progressToken;
 
 			}
 
-			$tcJob->setTranscodeReady();
-			$tcJob->startTranscode();
-
 			// In-progress
 			AjaxResponse::returnSuccess([
-				'progressToken' => $tcJob->progressToken,
+				'progressTokens' => $progressTokens,
 				'meta' => $returnMeta,
 			]);
 
