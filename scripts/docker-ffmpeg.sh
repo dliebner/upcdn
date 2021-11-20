@@ -39,7 +39,12 @@ else
 fi
 
 if [ ! -z "$mute" ]; then
+    # Mute
 	encodeParams+=( -an )
+else
+    # Audio encode
+    encodeParams+=( -c:a libfdk_aac )
+    encodeParams+=( -vbr 2 )
 fi
 
 if [ ! -z "$hlsOutput" ]; then
