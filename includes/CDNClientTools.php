@@ -1214,7 +1214,7 @@ class TranscodingJob {
 
 		$this->unsetTranscodeStarted();
 
-		throw new GeneralExceptionWithData("Error starting job", [
+		throw new GeneralExceptionWithData("Error starting job: $cmd", [
 			'cmd' => $cmd,
 			'execResult' => $execResult,
 			'execOutput' => $execOutput
