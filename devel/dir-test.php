@@ -10,7 +10,7 @@ $basePath = realpath($root_path . 'transcoding/XmsABEKThX2GdMPJ_300x250/out/');
 
 /** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
-	new RecursiveDirectoryIterator($basePath),
+	new RecursiveDirectoryIterator($basePath, FilesystemIterator::SKIP_DOTS),
 	RecursiveIteratorIterator::LEAVES_ONLY
 );
 
