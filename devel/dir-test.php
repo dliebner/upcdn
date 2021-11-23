@@ -10,22 +10,26 @@ $basePath = realpath($root_path . 'transcoding/XmsABEKThX2GdMPJ_300x250/out/');
 
 /** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
-	new RecursiveDirectoryIterator($basePath, FilesystemIterator::SKIP_DOTS),
+	new RecursiveDirectoryIterator($basePath),
 	RecursiveIteratorIterator::LEAVES_ONLY
 );
 
 foreach( $files as $filename => $file ) {
 
-	if( $file->isDir() ) {
-
-		echo "dir ";
-
-	}
-
 	// Get real and relative path for current file
 	$filePath = $file->getRealPath();
 	$relativePath = substr($filePath, strlen($basePath) + 1);
 
-	echo "$relativePath\n";
+	if( $file->isDir() ) {
+
+		$dirName = $relativePath;
+
+	} else {
+
+		$dirName = dirname($relativePath);
+
+	}
+
+	echo "$dirName\n$relativePath\n\n";
 
 }
