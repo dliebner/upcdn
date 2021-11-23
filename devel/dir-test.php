@@ -6,7 +6,7 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
-$basePath = realpath($root_path . 'transcoding/');
+$basePath = realpath($root_path . 'transcoding/XmsABEKThX2GdMPJ_300x250/out/');
 
 /** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
