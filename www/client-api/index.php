@@ -233,15 +233,6 @@ switch( $action ) {
 		}
 
 		$fileSizeBytes = filesize($tmpFile);
-		
-		// Validate video file
-		$fileUploadLimit = $responseData['fileUploadLimit'];
-
-		if( $fileSizeBytes > $fileUploadLimit ) {
-
-			AjaxResponse::returnError("Max file size: " . humanFilesize($fileUploadLimit));
-
-		}
 
 		if( $probeResult = FFProbe::dockerProxyProbe($tmpFile, $execResult, $execOutput, $ffprobeResultRaw) ) {
 
@@ -269,6 +260,15 @@ switch( $action ) {
 			if( !CDNClient::validateCdnToken($cdnToken, 'upload-video', ['sourceWidth' => $sourceWidth, 'sourceHeight' => $sourceHeight], $responseData, $_SERVER['REMOTE_ADDR'], $userId) ) {
 	
 				AjaxResponse::returnError("Invalid upload token.");
+	
+			}
+		
+			// Validate video file
+			$fileUploadLimit = $responseData['fileUploadLimit'];
+	
+			if( $fileSizeBytes > $fileUploadLimit ) {
+	
+				AjaxResponse::returnError("Max file size: " . humanFilesize($fileUploadLimit));
 	
 			}
 	
