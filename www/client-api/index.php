@@ -220,22 +220,6 @@ switch( $action ) {
 					Simultaneously upload original to cloud storage
 				- Upload transcoded video to cloud storage
 		*/
-		$cdnToken = postdata_to_original($_POST['cdnToken']);
-		$userId = (int)$_POST['userId'];
-
-		$returnMeta = [];
-
-		if( !CDNClient::validateCdnToken($cdnToken, $action, $responseData, $_SERVER['REMOTE_ADDR'], $userId) ) {
-
-			AjaxResponse::returnError("Invalid upload token.");
-
-		}
-
-		// Grab metadata
-		$meta = $responseData['meta'];
-		if( is_array($responseData['returnMeta']) ) $returnMeta = $responseData['returnMeta'] + $returnMeta;
-
-		if( !$versions = $responseData['versions'] ) throw new GeneralExceptionWithData("Missing versions in validateCdnToken response.", $responseData);
 
 		// Get uploaded file data
 		$originalFilename = $_FILES['image']['name'];
@@ -259,14 +243,6 @@ switch( $action ) {
 
 		}
 
-		// Get lowest maxDuration
-		$minMaxDuration = null;
-		foreach( $versions as $version ) {
-
-			if( !$minMaxDuration || $version['maxDuration'] < $minMaxDuration ) $minMaxDuration = $version['maxDuration'];
-
-		}
-
 		if( $probeResult = FFProbe::dockerProxyProbe($tmpFile, $execResult, $execOutput, $ffprobeResultRaw) ) {
 
 			// Check probe result
@@ -283,6 +259,32 @@ switch( $action ) {
 			$sourceHasAudio = $probeResult->hasAudio();
 			$sourceWidth = $videoStream->displayWidth();
 			$sourceHeight = $videoStream->displayHeight();
+		
+			// Validate CDN token, send source info, get video versions (to encode)
+			$cdnToken = postdata_to_original($_POST['cdnToken']);
+			$userId = (int)$_POST['userId'];
+	
+			$returnMeta = [];
+	
+			if( !CDNClient::validateCdnToken($cdnToken, 'upload-video', ['sourceWidth' => $sourceWidth, 'sourceHeight' => $sourceHeight], $responseData, $_SERVER['REMOTE_ADDR'], $userId) ) {
+	
+				AjaxResponse::returnError("Invalid upload token.");
+	
+			}
+	
+			// Grab metadata
+			$meta = $responseData['meta'];
+			if( is_array($responseData['returnMeta']) ) $returnMeta = $responseData['returnMeta'] + $returnMeta;
+	
+			if( !$versions = $responseData['versions'] ) throw new GeneralExceptionWithData("Missing versions in validateCdnToken response.", $responseData);
+	
+			// Get lowest maxDuration
+			$minMaxDuration = null;
+			foreach( $versions as $version ) {
+	
+				if( !$minMaxDuration || $version['maxDuration'] < $minMaxDuration ) $minMaxDuration = $version['maxDuration'];
+	
+			}
 
 			foreach( $versions as $version ) {
 
