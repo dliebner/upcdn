@@ -20,13 +20,15 @@ foreach( $files as $filename => $file ) {
 	$filePath = $file->getRealPath();
 	$relativePath = substr($filePath, strlen($basePath) + 1);
 
+	$wwwPath = "./../fake/www/path/";
+
 	if( $file->isDir() ) {
 
-		$dirName = $relativePath;
+		$dirName = $wwwPath . $relativePath;
 
 	} else {
 
-		$dirName = dirname($relativePath);
+		$dirName = $wwwPath . dirname($relativePath);
 
 	}
 
