@@ -6,7 +6,7 @@ $root_path = './../';
 
 require_once( $root_path. 'common.php' );
 
-$basePath = realpath($root_path . 'www/v/');
+$basePath = realpath($root_path . 'transcoding/');
 
 /** @var SplFileInfo[] $files */
 $files = new RecursiveIteratorIterator(
@@ -26,6 +26,6 @@ foreach( $files as $filename => $file ) {
 	$filePath = $file->getRealPath();
 	$relativePath = substr($filePath, strlen($basePath) + 1);
 
-	echo "$filename vs $relativePath vs " . $file->getPath() . " vs " . $file->getBasename() . " vs " . $file->getFilename() . "\n";
+	echo "$relativePath\n";
 
 }
