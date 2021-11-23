@@ -1289,14 +1289,20 @@ class TranscodingJob {
 
 				$dirName = $wwwDir . $relativePath;
 
-				// Create missing path directories
-				if( !file_exists($dirName) && !mkdir_recursive($dirName, 0775)) {
-					
-					throw new Exception("Could not create $dirName dir.");
-					
-				}
-
 			} else {
+
+				$dirName = $wwwDir . dirname($relativePath);
+
+			}
+
+			// Create missing path directories
+			if( !file_exists($dirName) && !mkdir_recursive($dirName, 0775)) {
+				
+				throw new Exception("Could not create $dirName dir.");
+				
+			}
+
+			if( !$file->isDir() ) {
 
 				// Move files
 				rename($filePath, $wwwDir . $relativePath);
