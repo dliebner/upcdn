@@ -396,6 +396,7 @@ switch( $action ) {
 				} else {
 
 					// Copy source video to new job's inProgressPath
+					$tcJob->createInProgressDir();
 					copy($movedUploadedFile->inProgressPath(), $tcJob->inProgressPath());
 
 				}
