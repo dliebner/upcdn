@@ -77,7 +77,7 @@ int main() {
                client.incrby(key, bytes, cb).expireat(key, expires, cb);
             }
             if( status == 404 && domain == "${BGCDN_HOSTNAME}" ) {
-               client.hsetnx("bgcdn:404_uris", uri, 1);
+               client.hsetnx("bgcdn:404_uris", uri, "1");
             }
             // commit requests
             # if REDIS_PIPE_ASYNC_COMMIT
