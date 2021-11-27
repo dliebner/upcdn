@@ -23,6 +23,7 @@ class CDNClient {
 	const HUB_ACTION_VALIDATE_CDN_TOKEN = 'validateCdnToken';
 	const HUB_ACTION_CREATE_SOURCE_VIDEO = 'createSourceVideo';
 	const HUB_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
+	const HUB_ACTION_FILE_ORACLE_MISSING_PATHS = 'queryMissingPaths';
 
 	const CLIENT_ACTION_INIT_SERVER = 'initServer';
 	const CLIENT_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
@@ -803,6 +804,102 @@ class TranscodingJobSettings implements JsonSerializable {
 
 }
 
+class VideoPath {
+
+	public static function localWwwPath() {
+
+		global $root_path;
+
+		return $root_path . CDNClient::DIR_WWW;
+
+	}
+
+	public static function getDirPrefix($filename) {
+
+		$clean = array_values(array_filter(str_split($filename), function($char) {
+
+			return $char != '-';
+
+		}));
+
+		return $clean[0] . '/' . $clean[1] . '/' . $clean[2] . '/';
+
+	}
+
+	public static function videoUriBaseFolder($filename) {
+
+		return CDNClient::DIR_VIDEO . self::getDirPrefix($filename);
+
+	}
+
+	protected static function hlsRelativeDir($versionFilename) {
+
+		return $versionFilename . '/';
+
+	}
+
+	public static function hlsVideoFilesUriFolder($versionFilename) {
+
+		return self::videoUriBaseFolder($versionFilename) . self::hlsRelativeDir($versionFilename);
+
+	}
+
+	public static function hlsVideoFilesLocalFolder($versionFilename) {
+
+		return self::localWwwPath() . self::hlsVideoFilesUriFolder($versionFilename);
+
+	}
+
+	public static function hlsIndexUriPath($versionFilename) {
+
+		return self::hlsVideoFilesUriFolder($versionFilename) . 'index.m3u8';
+
+	}
+
+	public static function hlsIndexLocalPath($versionFilename) {
+
+		return self::localWwwPath() . self::hlsIndexLocalPath($versionFilename);
+
+	}
+
+	public static function hlsZipUriPath($versionFilename) {
+
+		return self::hlsVideoFilesUriFolder($versionFilename) . $versionFilename . '.zip';
+
+	}
+
+	public static function hlsZipLocalPath($versionFilename) {
+
+		return self::localWwwPath() . self::hlsZipUriPath($versionFilename);
+
+	}
+
+	public static function mp4UriPath($versionFilename) {
+
+		return self::videoUriBaseFolder($versionFilename) . $versionFilename . '.mp4';
+
+	}
+
+	public static function mp4LocalPath($versionFilename) {
+
+		return self::localWwwPath() . self::mp4UriPath($versionFilename);
+
+	}
+
+	public static function getSrcCloudPath($srcFilename, $srcExtension) {
+
+		return 'video_src/' . self::getDirPrefix($srcFilename) . $srcFilename . ($srcExtension ? '.' . $srcExtension : '');
+
+	}
+
+	public static function getVersionCloudPath($versionFilename, $versionType) {
+
+		return 'video_versions/' . self::getDirPrefix($versionFilename) . $versionFilename . ($versionType === 'hls' ? '.zip' : '.mp4');
+
+	}
+
+}
+
 class TranscodingJob {
 
 	public $id;
@@ -872,14 +969,6 @@ class TranscodingJob {
 	public function sourceVideoExistsOnDisk() {
 
 		return file_exists($this->inProgressPath());
-
-	}
-
-	public function wwwDir() {
-
-		global $root_path;
-
-		return $root_path . CDNClient::DIR_WWW . CDNClient::DIR_VIDEO . $this->getDirPrefix();
 
 	}
 
@@ -1231,24 +1320,6 @@ class TranscodingJob {
 
 	}
 
-	public function hlsRelativeDir() {
-
-		return $this->versionFilename . '/';
-
-	}
-
-	public function hlsWWWDirPath() {
-
-		return $this->wwwDir() . $this->hlsRelativeDir();
-
-	}
-
-	public function hlsZipPath() {
-
-		return $this->hlsWWWDirPath() . $this->versionFilename . '.zip';
-
-	}
-
 	public function finishTranscode() {
 
 		$db = db();
@@ -1269,7 +1340,7 @@ class TranscodingJob {
 		}
 
 		$transcodeOutDir = $this->inProgressDir() . CDNClient::DIR_TRANSCODE_OUTPUT;
-		$wwwDir = $this->wwwDir();
+		$wwwDir = VideoPath::localWwwPath() . VideoPath::videoUriBaseFolder($this->srcFilename);
 
 		// Move contents of transcode out dir to www dir
 		$basePath = realpath($transcodeOutDir);
@@ -1322,11 +1393,11 @@ class TranscodingJob {
 			// Prepare zipped files for cloud upload
 
 			// Get real path for our folder
-			$basePath = realpath($this->hlsWWWDirPath());
+			$basePath = realpath(VideoPath::hlsVideoFilesLocalFolder($this->versionFilename));
 
 			// Initialize archive object
 			$zip = new ZipArchive();
-			$zip->open($this->hlsZipPath(), ZipArchive::CREATE | ZipArchive::OVERWRITE);
+			$zip->open(VideoPath::hlsZipLocalPath($this->versionFilename), ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
 			// Create recursive directory iterator
 			/** @var SplFileInfo[] $files */
@@ -1364,15 +1435,12 @@ class TranscodingJob {
 
 		} else {
 
-			// Just get size
-			$basePath = realpath($this->wwwDir());
-			$filePath = $probeVideoFile = $basePath . '/' . $this->versionFilename . '.mp4';
+			// mp4: Just get size
+			$filePath = $probeVideoFile = VideoPath::mp4LocalPath($this->versionFilename);
 
 			if( !file_exists($filePath) ) {
 
-				throw new GeneralExceptionWithData("Could not find video file $filePath", [
-					'basePath' => $basePath
-				]);
+				throw new GeneralException("Could not find video file $filePath");
 
 			}
 
@@ -1740,27 +1808,15 @@ class TranscodingJob {
 
 	}
 
-	public function getDirPrefix() {
-
-		$clean = array_values(array_filter(str_split($this->srcFilename), function($char) {
-
-			return $char != '-';
-
-		}));
-
-		return $clean[0] . '/' . $clean[1] . '/' . $clean[2] . '/';
-
-	}
-
 	public function getSrcCloudPath() {
 
-		return 'video_src/' . $this->getDirPrefix() . $this->srcFilename . ($this->srcExtension ? '.' . $this->srcExtension : '');
+		return VideoPath::getSrcCloudPath($this->srcFilename, $this->srcExtension);
 
 	}
 
-	public function getCloudPath() {
+	public function getVersionCloudPath() {
 
-		return 'video_versions/' . $this->getDirPrefix() . $this->versionFilename . ($this->isHls() ? '.zip' : '.mp4');
+		return VideoPath::getVersionCloudPath($this->versionFilename, $this->isHls() ? 'hls' : 'mp4');
 
 	}
 

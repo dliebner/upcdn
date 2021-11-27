@@ -17,6 +17,8 @@ $start = time();
 set_time_limit(60 * 2);
 while( time() - 60 < $start ) {
 
+	start_timer('secondTimer');
+
 	// Redis: Get and delete current 404 uris
 	$ret = $redis->multi()
 		->hGetAll('bgcdn:404_uris')
@@ -25,18 +27,127 @@ while( time() - 60 < $start ) {
 
 	if( $ret ) {
 
+		$missingTailpaths = [];
 		foreach( array_keys($ret) as $path ) {
 
+			// Skip potentially malicious paths
+			if( strpos($path, '../') !== false || strpos($path, '://') !== false ) continue;
+
 			/**
-			 * fuck TODO:
 			 * 	Implement valid matching patterns
 			 * 	Build list of URIs/paths to send to File Oracle
 			 * 	Query File Oracle for file details
-			 * 	Retrieve files from B2
+			 * 	Retrieve files from other client servers / B2
 			 * 	Do any further processing as needed (such as unzipping)
 			 */
 
+			/*/ Dumb, all missing-paths version
+			if( preg_match('@^/' . preg_quote(CDNClient::DIR_VIDEO) . '@', $path) ) {
+
+				$relpath = substr($path, strlen('/' . CDNClient::DIR_VIDEO));
+
+				if( !file_exists($root_path . CDNClient::DIR_WWW . CDNClient::DIR_VIDEO . $relpath) ) {
+
+					$missingRelpaths[] = $relpath;
+
+				}
+
+			}
+			*/
+
+			// Smart, folder-structure-aware pattern-matching version
+			$basePattern = '@^/' . preg_quote(CDNClient::DIR_VIDEO, '@');
+			$endQuote = '@';
+
+			$mp4Pattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)\.mp4)$' . $endQuote;
+			$hlsPattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)/index\.m3u8)$' . $endQuote;
+
+			if( preg_match($mp4Pattern, $path, $matches) ) {
+
+				$type = 'mp4';
+				$tailPath = $matches[1];
+				$versionFilename = $matches[2];
+				$srcFilename = $matches[3];
+				$width = $matches[4];
+				$height = $matches[5];
+				$hasAudio = !$matches[6];
+
+				if( !file_exists(VideoPath::mp4LocalPath($versionFilename)) ) {
+	
+					$missingTailpaths[] = $tailPath;
+	
+				}
+
+			} else if( preg_match($hlsPattern, $path, $matches) ) {
+
+				$type = 'hls';
+				$tailPath = $matches[1];
+				$versionFilename = $matches[2];
+				$srcFilename = $matches[3];
+				$width = $matches[4];
+				$height = $matches[5];
+				$hasAudio = !$matches[6];
+
+				if( !file_exists(VideoPath::hlsIndexLocalPath($versionFilename)) ) {
+	
+					$missingTailpaths[] = $tailPath;
+	
+				}
+
+			}
+
 		}
+
+		if( $missingTailpaths ) {
+
+			// Query File Oracle (hub) for file details
+			CDNClient::postToHub(CDNClient::HUB_ACTION_FILE_ORACLE_MISSING_PATHS, [
+				'missingTailpaths' => $missingTailpaths
+			], [
+				'success' => function($hubResponse) {
+
+					if( !$downloadVersions = $hubResponse->downloadVersions ) throw new Exception("Missing downloadVersions in hub response");
+
+					$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
+
+					foreach( $downloadVersions as $version ) {
+
+						$transcodingServerUrl = null;
+
+						if( $version['transcodedByHostname'] ) {
+
+							$transcodingServerUrlBase = 'http://' . $version['transcodedByHostname'] . '/';
+
+							switch( $version['type'] ) {
+
+								case 'mp4':
+
+									$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::mp4UriPath($version['versionFilename']);
+
+									break;
+
+								case 'hls':
+
+									$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::hlsZipUriPath($version['versionFilename']);
+
+									break;
+
+							}
+
+						}
+
+						$versionCloudPath = VideoPath::getVersionCloudPath($version['versionFilename'], $version['type']);
+
+					}
+			
+				}
+			]);
+
+		}
+
+		$timeElapsed = stop_timer('secondTimer');
+		$waitSeconds = max(0, 1 - $timeElapsed);
+		usleep($waitSeconds * 1000000);
 
 	}
 

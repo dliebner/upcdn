@@ -96,19 +96,19 @@ while( time() - $maxWaitTime < $start ) {
 				if( $job->isHls() ) {
 
 					// Zipped HLS files
-					$localFile = $job->hlsZipPath();
+					$localFile = VideoPath::hlsZipLocalPath($job->versionFilename);
 
 				} else {
 
 					// mp4 file
-					$localFile = $job->wwwDir() . $job->versionFilename . '.mp4';
+					$localFile = VideoPath::mp4LocalPath($job->versionFilename);
 
 				}
 
 				$pup->addFileToUpload($file = [
 					'bgcdn:jobId' => $job->id,
 					'bgcdn:type' => 'version',
-					'FileName' => $job->getCloudPath(),
+					'FileName' => $job->getVersionCloudPath(),
 					'LocalFile' => $localFile
 				]);
 

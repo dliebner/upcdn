@@ -12,6 +12,7 @@ chmod +x install-composer.sh
 chmod +x ../scripts/*
 chmod +x ../daemon/*
 chmod +x ../cron/*.sh
+chmod +x ../devel/cpp-redis-pipe/*.sh
 
 # general dependencies
 sudo apt update
@@ -117,16 +118,23 @@ composer require guzzlehttp/guzzle:^7
 composer config repositories.backblaze-b2 vcs https://github.com/dliebner/backblaze-b2
 composer require dliebner/backblaze-b2:dev-master
 
+# replace occurences of BGCDN_HOSTNAME in source files
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /home/devel/cpp-redis-pipe/redis-pipe.cc
+
+# build stuff
+../devel/cpp-redis-pipe/build.sh
+
 # copy files
 sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sudo cp ../devel/cpp-redis-pipe/redis-pipe ../scripts/
 sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
 sudo cp bgcdn-sudoers /etc/sudoers.d/
 sudo cp bgcdn-cron /etc/cron.d/
 sudo cp bgcdn-docker-events.service /etc/systemd/system/
 
-# replace occurences of BGCDN_HOSTNAME in conf files
+# replace occurences of BGCDN_HOSTNAME in copied conf files
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
-# replace occurences of BGCDN_HOSTNAME in scripts
+# replace occurences of BGCDN_HOSTNAME in copied scripts
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /home/bgcdn/scripts/redis-pipe.sh
 
 # soft link

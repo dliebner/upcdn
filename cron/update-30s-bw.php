@@ -25,9 +25,7 @@ while( time() - 60 < $start ) {
 	]);
 
 	$timeElapsed = stop_timer('update30sBw');
-
 	$waitSeconds = max(0, 1 - $timeElapsed);
-
 	usleep($waitSeconds * 1000000);
 
 }
