@@ -167,6 +167,11 @@ while( time() - 60 < $start ) {
 
 						$missingFileDownloader->doDownload();
 
+						print_r([
+							'downloadedFiles' => $missingFileDownloader->getAllDownloadedFiles(),
+							'failedFiles' => $missingFileDownloader->getAllFailedFiles()
+						]);
+
 					}
 			
 				}
