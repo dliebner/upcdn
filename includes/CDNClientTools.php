@@ -2064,8 +2064,6 @@ class MissingFileDownloader {
 
         }
 
-		print_r($promises);
-
         \GuzzleHttp\Promise\Each::of($promises)->then()->wait();
 
         return $this->getAllFailedFiles() ? false : $this->getAllDownloadedFiles();
