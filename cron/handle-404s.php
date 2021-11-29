@@ -17,7 +17,7 @@ $start = time();
 set_time_limit(60 * 2);
 while( time() - 60 < $start ) {
 
-	start_timer('secondTimer');
+	echo start_timer('secondTimer') . "\n";
 
 	// Redis: Get and delete current 404 uris
 	$ret = $redis->multi()
@@ -104,9 +104,9 @@ while( time() - 60 < $start ) {
 
 		}
 
-		if( $missingTailpaths ) {
+		print_r($missingTailpaths);
 
-			print_r($missingTailpaths);
+		if( $missingTailpaths ) {
 
 			// Query File Oracle (hub) for file details
 			CDNClient::postToHub(CDNClient::HUB_ACTION_FILE_ORACLE_MISSING_PATHS, [
