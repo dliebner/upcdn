@@ -98,8 +98,6 @@ while( time() - 60 < $start ) {
 
 		}
 
-		print_r($missingTailpaths);
-
 		if( $missingTailpaths ) {
 
 			// Query File Oracle (hub) for file details

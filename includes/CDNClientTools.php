@@ -2110,7 +2110,7 @@ class MissingFileDownloadLane {
 						$zip->extractTo( dirname($zipFile) );
 						$zip->close();
 
-						echo $zipFile . " unzipped\n";
+						//echo $zipFile . " unzipped\n";
 
 					}
 
@@ -2128,7 +2128,7 @@ class MissingFileDownloadLane {
 					'sink' => $nextFile->localSavePath
 				];
 
-				echo "attempting to download b2 file from $requestUrl to " . $nextFile->localSavePath . "\n";
+				//echo "attempting to download b2 file from $requestUrl to " . $nextFile->localSavePath . "\n";
 
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
@@ -2144,7 +2144,7 @@ class MissingFileDownloadLane {
 
 					$this->failedFiles[] = $nextFile;
 
-					echo "$requestUrl failed: " . $reason->getMessage() . "\n";
+					//echo "$requestUrl failed: " . $reason->getMessage() . "\n";
 
 					return $this->downloadNextFile();
 
@@ -2161,7 +2161,7 @@ class MissingFileDownloadLane {
 				// Attempt to download file directly from transcoding server
 				$guzzleClient = $this->parallelDownloader->guzzleClient;
 
-				echo "attempting to download " . $nextFile->transcodingServerUrl . " to " . $nextFile->localSavePath . "\n";
+				//echo "attempting to download " . $nextFile->transcodingServerUrl . " to " . $nextFile->localSavePath . "\n";
 
 				return $guzzleClient->requestAsync('GET', $nextFile->transcodingServerUrl, [
 					'connect_timeout' => 1,
@@ -2176,7 +2176,7 @@ class MissingFileDownloadLane {
 
 				}, function(Exception $e) use ($b2Download, $nextFile) {
 
-					echo "direct download " . $nextFile->transcodingServerUrl . " failed: " . $e->getMessage() . "\n";
+					//echo "direct download " . $nextFile->transcodingServerUrl . " failed: " . $e->getMessage() . "\n";
 
 					// If direct transcoding server download fails, attempt to download from cloud
 					return $b2Download();
