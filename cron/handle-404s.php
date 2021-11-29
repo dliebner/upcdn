@@ -17,7 +17,7 @@ $start = time();
 set_time_limit(60 * 2);
 while( time() - 60 < $start ) {
 
-	echo start_timer('secondTimer') . "\n";
+	start_timer('secondTimer');
 
 	// Redis: Get and delete current 404 uris
 	$ret = $redis->multi()
@@ -67,6 +67,9 @@ while( time() - 60 < $start ) {
 				$hlsPattern,
 				$path
 			]);
+
+			echo preg_match($mp4Pattern, $path, $matches) . "\n";
+			echo preg_match($hlsPattern, $path, $matches) . "\n";
 
 			if( preg_match($mp4Pattern, $path, $matches) ) {
 
