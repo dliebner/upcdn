@@ -25,12 +25,10 @@ while( time() - 60 < $start ) {
 		->del('bgcdn:404_uris')
 		->exec();
 
-	if( $ret ) {
-
-		print_r($ret);
+	if( $ret && ($_404uris = $ret[0]) ) {
 
 		$missingTailpaths = [];
-		foreach( array_keys($ret) as $path ) {
+		foreach( array_keys($_404uris) as $path ) {
 
 			// Skip potentially malicious paths
 			if( strpos($path, '../') !== false || strpos($path, '://') !== false ) continue;
