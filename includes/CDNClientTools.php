@@ -2106,6 +2106,8 @@ class MissingFileDownloadLane {
 					'sink' => $nextFile->localSavePath
 				];
 
+				echo "attempting to download b2 file from $requestUrl to " . $nextFile->localSavePath . "\n";
+
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
 				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($nextFile) {
@@ -2130,9 +2132,11 @@ class MissingFileDownloadLane {
 
 					return $this->downloadNextFile();
 					
-				}, function(\Exception $reason) use ($nextFile) {
+				}, function(\Exception $reason) use ($nextFile, $requestUrl) {
 
 					$this->failedFiles[] = $nextFile;
+
+					echo "$requestUrl failed\n";
 
 					return $this->downloadNextFile();
 
@@ -2144,6 +2148,8 @@ class MissingFileDownloadLane {
 
 				// Attempt to download file directly from transcoding server
 				$guzzleClient = $this->parallelDownloader->guzzleClient;
+
+				echo "attempting to download " . $nextFile->transcodingServerUrl . " to " . $nextFile->localSavePath . "\n";
 
 				return $guzzleClient->requestAsync('GET', $nextFile->transcodingServerUrl, [
 					'connect_timeout' => 1,
