@@ -27,6 +27,8 @@ while( time() - 60 < $start ) {
 
 	if( $ret ) {
 
+		print_r($ret);
+
 		$missingTailpaths = [];
 		foreach( array_keys($ret) as $path ) {
 
