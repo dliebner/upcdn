@@ -182,6 +182,7 @@ while( time() - 60 < $start ) {
 
 		$timeElapsed = stop_timer('secondTimer');
 		$waitSeconds = max(0, 1 - $timeElapsed);
+		echo "wait $waitSeconds\n";
 		usleep($waitSeconds * 1000000);
 
 	}
