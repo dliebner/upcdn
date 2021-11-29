@@ -62,6 +62,12 @@ while( time() - 60 < $start ) {
 			$mp4Pattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)\.mp4)$' . $endQuote;
 			$hlsPattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)/index\.m3u8)$' . $endQuote;
 
+			print_r([
+				$mp4Pattern,
+				$hlsPattern,
+				$path
+			]);
+
 			if( preg_match($mp4Pattern, $path, $matches) ) {
 
 				$type = 'mp4';
