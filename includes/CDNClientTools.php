@@ -858,7 +858,7 @@ class VideoPath {
 
 	public static function hlsIndexLocalPath($versionFilename) {
 
-		return self::localWwwPath() . self::hlsIndexLocalPath($versionFilename);
+		return self::localWwwPath() . self::hlsIndexUriPath($versionFilename);
 
 	}
 
