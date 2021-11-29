@@ -2136,7 +2136,7 @@ class MissingFileDownloadLane {
 
 					$this->failedFiles[] = $nextFile;
 
-					echo "$requestUrl failed\n";
+					echo "$requestUrl failed: " . $reason->getMessage() . "\n";
 
 					return $this->downloadNextFile();
 
@@ -2160,7 +2160,9 @@ class MissingFileDownloadLane {
 
 					return $this->downloadNextFile();
 
-				}, function() use ($b2Download) {
+				}, function(Exception $e) use ($b2Download, $nextFile) {
+
+					echo "direct download " . $nextFile->transcodingServerUrl . " failed: " . $e->getMessage() . "\n";
 
 					// If direct transcoding server download fails, attempt to download from cloud
 					return $b2Download();
