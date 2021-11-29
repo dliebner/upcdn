@@ -151,7 +151,8 @@ while( time() - 60 < $start ) {
 
 							$missingFileDownloader->addFileToDownload(
 								new MissingFile(
-									($version['type'] === 'hls' ? VideoPath::hlsZipLocalPath($versionFilename) : VideoPath::mp4LocalPath($versionFilename)),
+									($isHls = $version['type'] === 'hls') ? VideoPath::hlsZipLocalPath($versionFilename) : VideoPath::mp4LocalPath($versionFilename),
+									$isHls,
 									VideoPath::getVersionCloudPath($versionFilename, $version['type']),
 									$transcodingServerUrl
 								)

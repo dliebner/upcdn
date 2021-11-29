@@ -1944,12 +1944,14 @@ class Cron {
 class MissingFile {
 
 	public $localSavePath;
+	public $isZipped;
 	public $transcodingServerUrl;
 	public $b2CloudPath;
 
-	public function __construct($localSavePath, $b2CloudPath, $transcodingServerUrl = null) {
+	public function __construct($localSavePath, $isZipped, $b2CloudPath, $transcodingServerUrl = null) {
 		
 		$this->localSavePath = $localSavePath;
+		$this->isZipped = $isZipped;
 		$this->transcodingServerUrl = $transcodingServerUrl;
 		$this->b2CloudPath = $b2CloudPath;
 
@@ -2107,6 +2109,22 @@ class MissingFileDownloadLane {
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
 				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($nextFile) {
+
+					if( $nextFile->isZipped ) {
+
+						// Unzip the downloaded file
+						$zipFile = $nextFile->localSavePath;
+
+						$zip = new ZipArchive;
+
+						if( $zip->open($zipFile) ) {
+
+							$zip->extractTo( dirname($zipFile) );
+							$zip->close();
+
+						}
+
+					}
 					
 					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
 
