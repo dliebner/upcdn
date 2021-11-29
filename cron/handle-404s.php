@@ -62,15 +62,6 @@ while( time() - 60 < $start ) {
 			$mp4Pattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)\.mp4)$' . $endQuote;
 			$hlsPattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)/index\.m3u8)$' . $endQuote;
 
-			print_r([
-				$mp4Pattern,
-				$hlsPattern,
-				$path
-			]);
-
-			echo preg_match($mp4Pattern, $path, $matches) . "\n";
-			echo preg_match($hlsPattern, $path, $matches) . "\n";
-
 			if( preg_match($mp4Pattern, $path, $matches) ) {
 
 				$type = 'mp4';
@@ -117,7 +108,7 @@ while( time() - 60 < $start ) {
 			], [
 				'success' => function($hubResponse) {
 
-					if( !isset($hubResponse->downloadVersions) ) throw new Exception("Missing downloadVersions in hub response");
+					if( !isset($hubResponse->downloadVersions) ) throw new Exception("Missing downloadVersions in hub response " . print_r($hubResponse, 1));
 
 					if( $downloadVersions = $hubResponse->downloadVersions ) {
 
@@ -187,7 +178,7 @@ while( time() - 60 < $start ) {
 
 	$timeElapsed = stop_timer('secondTimer');
 	$waitSeconds = max(0, 1 - $timeElapsed);
-	echo "wait $waitSeconds\n";
+	//echo "wait $waitSeconds\n";
 	usleep($waitSeconds * 1000000);
 
 }
