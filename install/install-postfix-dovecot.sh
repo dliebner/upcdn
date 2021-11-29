@@ -18,6 +18,8 @@ Email="bgcdn@${Domain}"    # Email with your domain
 read -sp "Choose a password for $Email: " EmailPass
 echo
 
+exit
+
 #
 # Installing postfix - postfix-mysql
 #
@@ -42,8 +44,6 @@ echo "+-----------------------------+"
 createDB(){
     cat <<EOF | mysql -uroot -p$mysqlPass
     CREATE DATABASE IF NOT EXISTS $database;
-    GRANT SELECT ON $database.* TO '$dbUser'@'127.0.0.1' IDENTIFIED BY '$dbUserPass';
-    FLUSH PRIVILEGES;
     USE $database;
 
     CREATE TABLE IF NOT EXISTS $database.domains (
