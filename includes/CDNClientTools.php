@@ -2054,12 +2054,12 @@ class MissingFileDownloader {
         // Create download lanes
         $numDownloadLanes = min($this->numFilesToDownload(), $this->numDownloadLanes);
 
-        $this->stdDownloadLanes = [];
+        $this->mfDownloadLanes = [];
         $promises = [];
 
         for( $i = 0; $i < $numDownloadLanes; $i++ ) {
 
-            $this->stdDownloadLanes[] = $downloadLane = new MissingFileDownloadLane($this);
+            $this->mfDownloadLanes[] = $downloadLane = new MissingFileDownloadLane($this);
             $promises[] = $downloadLane->begin();
 
         }
@@ -2151,6 +2151,10 @@ class MissingFileDownloadLane {
 				});
 
 			};
+
+			// Create directory if necessary
+			$dirname = dirname($nextFile->localSavePath);
+			if( !file_exists($dirname) ) mkdir_recursive($dirname);
 
 			if( $nextFile->transcodingServerUrl ) {
 
