@@ -108,11 +108,11 @@ while( time() - 60 < $start ) {
 			], [
 				'success' => function($hubResponse) {
 
-					if( !isset($hubResponse->downloadVersions) ) throw new Exception("Missing downloadVersions in hub response " . print_r($hubResponse, 1));
+					$responseData = CDNTools::objectToArrayRecursive($hubResponse->data);
 
-					if( $downloadVersions = $hubResponse->downloadVersions ) {
+					if( !isset($responseData['downloadVersions']) ) throw new Exception("Missing downloadVersions in hub response");
 
-						$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
+					if( $downloadVersions = $responseData['downloadVersions'] ) {
 
 						print_r($downloadVersions);
 
