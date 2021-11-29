@@ -2096,7 +2096,29 @@ class MissingFileDownloadLane {
 
         if( $nextFile = $this->parallelDownloader->getNextFile() ) {
 
-			$b2Download = function() use ($nextFile) {
+			$doUnzip = function() use ($nextFile) {
+
+				if( $nextFile->isZipped ) {
+
+					// Unzip the downloaded file
+					$zipFile = $nextFile->localSavePath;
+
+					$zip = new ZipArchive;
+
+					if( $zip->open($zipFile) ) {
+
+						$zip->extractTo( dirname($zipFile) );
+						$zip->close();
+
+						echo $zipFile . " unzipped\n";
+
+					}
+
+				}
+
+			};
+
+			$b2Download = function() use ($nextFile, $doUnzip) {
 
 				// If direct transcoding server download fails, attempt to download from cloud
 				$b2Client = $this->parallelDownloader->b2Client;
@@ -2110,24 +2132,10 @@ class MissingFileDownloadLane {
 
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
-				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($nextFile) {
-
-					if( $nextFile->isZipped ) {
-
-						// Unzip the downloaded file
-						$zipFile = $nextFile->localSavePath;
-
-						$zip = new ZipArchive;
-
-						if( $zip->open($zipFile) ) {
-
-							$zip->extractTo( dirname($zipFile) );
-							$zip->close();
-
-						}
-
-					}
+				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($nextFile, $doUnzip) {
 					
+					$doUnzip();
+
 					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
 
 					return $this->downloadNextFile();
@@ -2154,7 +2162,9 @@ class MissingFileDownloadLane {
 				return $guzzleClient->requestAsync('GET', $nextFile->transcodingServerUrl, [
 					'connect_timeout' => 1,
 					'sink' => $nextFile->localSavePath
-				])->then(function() use ($nextFile) {
+				])->then(function() use ($nextFile, $doUnzip) {
+
+					$doUnzip();
 
 					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
 
