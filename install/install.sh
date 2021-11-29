@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # init local files
 mkdir -p ../local
@@ -8,7 +8,7 @@ if( !defined('IN_SCRIPT') ) die( \"Hacking attempt\" );\
 " > ../local/constants.php
 
 # chmod files
-chmod +x install-composer.sh
+chmod +x *.sh
 chmod +x ../scripts/*
 chmod +x ../daemon/*
 chmod +x ../cron/*.sh
@@ -37,14 +37,26 @@ sudo apt update && sudo apt install docker-ce docker-ce-cli containerd.io
 docker pull dliebner/ffmpeg-entrydefault
 
 # install LAMP
-sudo apt install apache2 php7.4 php-cli php-dev libapache2-mod-fcgid php-fpm htop php-zip php-gd php-mbstring php-curl php-xml php-pear php-bcmath php-json php-common mysql-server php-mysql certbot python3-certbot-apache
+sudo apt install apache2 php7.4 php-cli php-dev libapache2-mod-fcgid php-fpm htop php-zip php-gd php-mbstring php-curl php-xml php-pear php-bcmath php-json php-common certbot python3-certbot-apache
+
+# Collect installation details
+read -p "CDN server hostname: " BGCDN_HOSTNAME
+read -sp "MySQL root password (keep a copy handy): " BGCDN_MYSQL_ROOT_PASS
+echo
+
+# Set hostname
+sudo hostnamectl set-hostname "${BGCDN_HOSTNAME}"
+
+# Install mysql
+echo "mysql-server mysql-server/root_password password $BGCDN_MYSQL_ROOT_PASS" | sudo debconf-set-selections
+echo "mysql-server mysql-server/root_password_again password $BGCDN_MYSQL_ROOT_PASS" | sudo debconf-set-selections
+echo 'Installing mysql ..'
+sudo apt-get install mysql-server -y > /dev/null 2>&1
+sudo apt-get install mysql-client expect -y > /dev/null 2>&1
+echo "+-----------------------------+"
 
 # secure MySQL installation
 sudo mysql_secure_installation
-
-# Collect installation details
-read -sp "CDN server hostname: " BGCDN_HOSTNAME
-echo
 
 # add bgcdn mysql user
 MYSQL_BGCDN_USER="bgcdn_user"
@@ -61,6 +73,9 @@ define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');\
 unset MYSQL_BGCDN_PW
 sudo service mysql restart
 
+# install postfix + dovecot
+./install-postfix-dovecot.sh -p "${BGCDN_MYSQL_ROOT_PASS}" -d "${BGCDN_HOSTNAME}" -b "${MYSQL_BGCDN_PW}"
+
 sudo ufw allow 'Apache Full'
 sudo ufw allow 10000
 
@@ -68,7 +83,7 @@ sudo a2enmod proxy_fcgi setenvif expires headers
 sudo a2enconf php7.4-fpm
 
 # install phpMyAdmin
-sudo apt install phpmyadmin
+sudo apt install php-mysql phpmyadmin
 
 # force SSL on phpMyAdmin
 PMAACONF=/etc/phpmyadmin/apache.conf

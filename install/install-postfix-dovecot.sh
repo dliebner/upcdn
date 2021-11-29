@@ -18,8 +18,6 @@ Email="bgcdn@${Domain}"    # Email with your domain
 read -sp "Choose a password for $Email: " EmailPass
 echo
 
-exit
-
 #
 # Installing postfix - postfix-mysql
 #
