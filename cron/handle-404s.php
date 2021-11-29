@@ -106,37 +106,60 @@ while( time() - 60 < $start ) {
 			], [
 				'success' => function($hubResponse) {
 
-					if( !$downloadVersions = $hubResponse->downloadVersions ) throw new Exception("Missing downloadVersions in hub response");
+					if( !isset($hubResponse->downloadVersions) ) throw new Exception("Missing downloadVersions in hub response");
 
-					$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
+					if( $downloadVersions = $hubResponse->downloadVersions ) {
+						$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
 
-					foreach( $downloadVersions as $version ) {
+						$guzzleClient = new \GuzzleHttp\Client();
 
-						$transcodingServerUrl = null;
+						$b2Client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
+							'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
+							'applicationKey' => Config::get('b2_application_key'),
+						]);
+						$b2Client->version = 2; // By default will use version 1
 
-						if( $version['transcodedByHostname'] ) {
+						$missingFileDownloader = new MissingFileDownloader($guzzleClient, $b2Client, 10);
 
-							$transcodingServerUrlBase = 'http://' . $version['transcodedByHostname'] . '/';
+						foreach( $downloadVersions as $version ) {
 
-							switch( $version['type'] ) {
+							$versionFilename = $version['versionFilename'];
 
-								case 'mp4':
+							$transcodingServerUrl = null;
 
-									$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::mp4UriPath($version['versionFilename']);
+							if( $version['transcodedByHostname'] && $version['transcodedByHostname'] !== Config::get('hostname') ) {
 
-									break;
+								$transcodingServerUrlBase = 'http://' . $version['transcodedByHostname'] . '/';
 
-								case 'hls':
+								switch( $version['type'] ) {
 
-									$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::hlsZipUriPath($version['versionFilename']);
+									case 'mp4':
 
-									break;
+										$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::mp4UriPath($versionFilename);
+
+										break;
+
+									case 'hls':
+
+										$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::hlsZipUriPath($versionFilename);
+
+										break;
+
+								}
 
 							}
 
+							$missingFileDownloader->addFileToDownload(
+								new MissingFile(
+									($version['type'] === 'hls' ? VideoPath::hlsZipLocalPath($versionFilename) : VideoPath::mp4LocalPath($versionFilename)),
+									VideoPath::getVersionCloudPath($versionFilename, $version['type']),
+									$transcodingServerUrl
+								)
+							);
+
 						}
 
-						$versionCloudPath = VideoPath::getVersionCloudPath($version['versionFilename'], $version['type']);
+						$missingFileDownloader->doDownload();
 
 					}
 			

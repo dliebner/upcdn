@@ -1940,3 +1940,218 @@ class Cron {
 	}
 
 }
+
+class MissingFile {
+
+	public $localSavePath;
+	public $transcodingServerUrl;
+	public $b2CloudPath;
+
+	public function __construct($localSavePath, $b2CloudPath, $transcodingServerUrl = null) {
+		
+		$this->localSavePath = $localSavePath;
+		$this->transcodingServerUrl = $transcodingServerUrl;
+		$this->b2CloudPath = $b2CloudPath;
+
+	}
+
+}
+
+class MissingFileDownloadResult {
+
+    public $originalMissingFile;
+    public $result;
+
+    public function __construct(MissingFile $originalMissingFile, $result) {
+
+        $this->originalMissingFile = $originalMissingFile;
+        $this->result = $result;
+        
+    }
+
+}
+
+/**
+ * Download flow:
+ * 	- N download lanes
+ * 	- K missing files
+ * 		Attempt to download file from transcoding server (promise) -> then cloud (promise)
+ * 	- Download lanes process one missing file at a time
+ */
+class MissingFileDownloader {
+
+	public $guzzleClient;
+	public $b2Client;
+
+	public $numDownloadLanes = 7;
+
+	/** @var MissingFile[] */
+    public $filesToDownload = [];
+
+    /** @var MissingFileDownloadLane[] */
+    protected $mfDownloadLanes = [];
+
+    public function __construct(\GuzzleHttp\Client $guzzleClient, \dliebner\B2\Client $b2Client, $numDownloadLanes = null) {
+
+		$this->guzzleClient = $guzzleClient;
+        $this->b2Client = $b2Client;
+
+        if( $numDownloadLanes ) $this->numDownloadLanes = $numDownloadLanes;
+        
+    }
+
+    public function addFileToDownload(MissingFile $missingFile) {
+
+        $this->filesToDownload[] = $missingFile;
+
+    }
+
+    public function getNextFile() {
+
+        return array_shift($this->filesToDownload);
+
+    }
+
+    /** @return MissingFileDownloadResult[] */
+    public function getAllDownloadedFiles() {
+
+        $allDownloadedFiles = [];
+
+        foreach( $this->mfDownloadLanes as $lane ) {
+
+            $allDownloadedFiles = array_merge($allDownloadedFiles, $lane->downloadedFiles);
+
+        }
+
+        return $allDownloadedFiles;
+
+    }
+
+    public function getAllFailedFiles() {
+
+        $allFailedFiles = [];
+
+        foreach( $this->mfDownloadLanes as $lane ) {
+
+            $allFailedFiles = array_merge($allFailedFiles, $lane->failedFiles);
+
+        }
+
+        return $allFailedFiles;
+
+    }
+
+    public function numFilesToDownload() {
+
+        return count($this->filesToDownload);
+
+    }
+
+    public function doDownload() {
+
+        // Create download lanes
+        $numDownloadLanes = min($this->numFilesToDownload(), $this->numDownloadLanes);
+
+        $this->stdDownloadLanes = [];
+        $promises = [];
+
+        for( $i = 0; $i < $numDownloadLanes; $i++ ) {
+
+            $this->stdDownloadLanes[] = $downloadLane = new MissingFileDownloadLane($this);
+            $promises[] = $downloadLane->begin();
+
+        }
+
+        \GuzzleHttp\Promise\Each::of($promises)->then()->wait();
+
+        return $this->getAllFailedFiles() ? false : $this->getAllDownloadedFiles();
+
+    }
+
+}
+
+class MissingFileDownloadLane {
+
+    public $parallelDownloader;
+
+	/** @var MissingFileDownloadResult[] */
+    public $downloadedFiles = [];
+    public $failedFiles = [];
+
+    public function __construct(MissingFileDownloader $mfDownloader) {
+
+        $this->parallelDownloader = $mfDownloader;
+        
+    }
+
+    public function begin() {
+
+        return $this->downloadNextFile();
+
+    }
+
+    protected function downloadNextFile() {
+
+        if( $nextFile = $this->parallelDownloader->getNextFile() ) {
+
+			$b2Download = function() use ($nextFile) {
+
+				// If direct transcoding server download fails, attempt to download from cloud
+				$b2Client = $this->parallelDownloader->b2Client;
+				
+				$requestUrl = $b2Client->getB2FileRequestUrl(Config::get('b2_bucket_name'), $nextFile->b2CloudPath);
+				$requestOptions = [
+					'sink' => $nextFile->localSavePath
+				];
+
+				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
+
+				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($nextFile) {
+					
+					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+
+					return $this->downloadNextFile();
+					
+				}, function(\Exception $reason) use ($nextFile) {
+
+					$this->failedFiles[] = $nextFile;
+
+					return $this->downloadNextFile();
+
+				});
+
+			};
+
+			if( $nextFile->transcodingServerUrl ) {
+
+				// Attempt to download file directly from transcoding server
+				$guzzleClient = $this->parallelDownloader->guzzleClient;
+
+				return $guzzleClient->requestAsync('GET', $nextFile->transcodingServerUrl, [
+					'connect_timeout' => 1,
+					'sink' => $nextFile->localSavePath
+				])->then(function() use ($nextFile) {
+
+					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+
+					return $this->downloadNextFile();
+
+				}, function() use ($b2Download) {
+
+					// If direct transcoding server download fails, attempt to download from cloud
+					return $b2Download();
+
+				});
+
+			} else {
+
+				// No transcoding server URL, just download from cloud
+				return $b2Download();
+
+			}
+
+        }
+
+    }
+
+}
