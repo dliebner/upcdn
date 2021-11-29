@@ -109,7 +109,10 @@ while( time() - 60 < $start ) {
 					if( !isset($hubResponse->downloadVersions) ) throw new Exception("Missing downloadVersions in hub response");
 
 					if( $downloadVersions = $hubResponse->downloadVersions ) {
+
 						$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
+
+						print_r($downloadVersions);
 
 						$guzzleClient = new \GuzzleHttp\Client();
 
