@@ -13,6 +13,8 @@ $redis->pconnect('127.0.0.1');
 
 $start = time();
 
+const B2_DEBUG_ON = true;
+
 // Run every second for 60 seconds
 set_time_limit(60 * 2);
 while( time() - 60 < $start ) {
