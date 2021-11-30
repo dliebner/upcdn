@@ -7,6 +7,8 @@ $root_path = './../';
 require_once( $root_path. 'common.php' );
 require_once( $root_path. 'includes/Email.php' );
 
+error_reporting(E_ALL);
+
 $email = new Email("dliebner@gmail.com", "Email test", "Hey bud it's me. This is a test email.");
 $res = $email->send();
 
