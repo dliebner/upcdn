@@ -11,3 +11,10 @@ $email = new Email("dliebner@gmail.com", "Email test", "Hey bud it's me. This is
 $res = $email->send();
 
 echo "mail was " . ($res ? "" : "not ") . "sent\n";
+
+if( !$res ) {
+
+	print_r(error_get_last());
+	echo "\n";
+
+}
