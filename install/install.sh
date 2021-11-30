@@ -134,14 +134,17 @@ sudo usermod -a -G www-data bgcdn
 ./install-composer.sh
 
 # install composer extensions
+cd /home/bgcdn
 composer require gabrielelana/byte-units
 composer require guzzlehttp/guzzle:^7
 #composer require obregonco/backblaze-b2
 composer config repositories.backblaze-b2 vcs https://github.com/dliebner/backblaze-b2
 composer require dliebner/backblaze-b2:dev-master
 
+cd /home/bgcdn/install
+
 # replace occurences of BGCDN_HOSTNAME in source files
-sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /home/devel/cpp-redis-pipe/redis-pipe.cc
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" ../devel/cpp-redis-pipe/redis-pipe.cc
 
 # build stuff
 ../devel/cpp-redis-pipe/build.sh
