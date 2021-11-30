@@ -129,7 +129,7 @@ sudo ln -s /etc/php/7.4/mods-available/redis.ini /etc/php/7.4/fpm/conf.d/20-redi
 sudo ln -s /etc/php/7.4/mods-available/redis.ini /etc/php/7.4/cli/conf.d/20-redis.ini
 
 # switch to mpm_worker
-sudo a2dismod mpm_prefork
+sudo a2dismod php7.4 mpm_prefork
 sudo a2enmod mpm_worker
 
 # create bgcdn user
