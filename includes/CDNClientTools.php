@@ -2195,3 +2195,209 @@ class MissingFileDownloadLane {
     }
 
 }
+
+class Logger {
+
+	public static function insertEventType( $eventType ) {
+
+		global $db;
+
+		$sql = "INSERT INTO log_event_types (event_type)
+			SELECT '" . original_to_query($eventType) . "'
+			FROM (SELECT @existing_id := NULL) as aux
+			LEFT OUTER JOIN (
+				SELECT @existing_id:=id as id
+				FROM log_event_types
+				WHERE event_type = '" . original_to_query($eventType) . "'
+			) as existing_row ON 1
+			WHERE existing_row.id IS NULL
+			LIMIT 1";
+
+		if( !$db->sql_query($sql) ) {
+
+			throw new QueryException('Could not insert/update log_event_types', $sql);
+
+		}
+
+		if( $db->sql_affectedrows() ) {
+
+			return $db->sql_nextid();
+				
+		} else {
+				
+			$sql = "SELECT @existing_id as existing_id";
+
+			if( !$result = $db->sql_query($sql) ) {
+					
+				throw new QueryException('Could not select @existing_id', $sql);
+					
+			}
+				
+			return $db->sql_fetchrow($result)['existing_id'];
+				
+		}
+
+	}
+	
+	public static function convertEventTypeToFilename($eventType, $backup = 'event') {
+		
+		$removed_apostrophes = preg_replace('/(\w)\'(\w)/', '$1$2', $eventType);
+		$cleaned = preg_replace(array('/[^\w\-]+/', '/[-_]+/'), '-', $removed_apostrophes);
+		$trimmed = trim($cleaned, '-');
+		$final = strtolower($trimmed);
+	
+		if( empty($final) ) $final = $backup;
+	
+		return $final . '.html';
+		
+	}
+	
+	/**
+	 * @param array $options bool 'email', string 'message', mixed 'data', Exception 'exception', bool 'to_file'
+	 */
+	public static function logEvent($eventType, $options = array()) {
+		
+		global $db, $root_path;
+		
+		if( $options['email'] ) {
+			
+			require_once($root_path . 'includes/Email.php');
+			
+			$contents = '<div>A log event has occurred:</div>
+				<table><tr><td valign="top"><b>Event: </b></td><td>' . h($eventType) . '</tr>' .
+				($options['message'] ? '<tr><td valign="top"><b>Message: </b></td><td>' . $options['message'] . '</td></tr>' : '');
+			
+			if( $options['exception'] ) {
+				
+				/**
+				 * @var Exception $e
+				 */
+				$e = $options['exception'];
+
+				$eMessage = '<div>';
+				$eMessage .= '<b>Fatal error</b>:  Uncaught exception \'' . get_class($e) . '\' with message ';
+				$eMessage .= $e->getMessage() . '<br>';
+				$eMessage .= 'Stack trace:<pre>' . $e->getTraceAsString() . '</pre>';
+				$eMessage .= 'thrown in <b>' . $e->getFile() . '</b> on line <b>' . $e->getLine() . '</b><br>';
+				$eMessage .= '</div>';
+				
+				$sqlError = $db->sql_error();
+				
+				if( $sqlError['message'] ) {
+					
+					$eMessage .= '<br><br>sql_error: ' . print_r($db->sql_error(),1);
+					
+					if( get_class($e) == 'QueryException' ) {
+						
+						$eMessage .= '<br>sql: ' . myspecialchars($e->sql);
+						
+					}
+					
+				}
+				
+				$contents .= '<tr><td valign="top"><b>Exception: </b></td><td>' . $eMessage . '</td></tr>';
+				
+			}
+				
+			$contents .= ($options['data'] ? '<tr><td valign="top"><b>Data: </b></td><td><pre>' . myspecialchars(print_r($options['data'], 1)) . '</pre></td></tr>' : '') .
+			'</table>';
+			
+			$email = new Email('dliebner@gmail.com', 'Event log: ' . $eventType, $contents);
+			$email->send();
+			
+		}
+		
+		try {
+				
+			if( $options['exception'] ) $sqlError = $sqlError ?: $db->sql_error();
+		
+			// Log to database
+			$eventTypeId = self::insertEventType($eventType);
+			
+			$sql = "INSERT INTO log_events (event_type_id, message, data, exception_data) VALUES 
+				(" . (int)$eventTypeId . ", "
+					. ($options['message'] ? "'" . original_to_query($options['message']) . "'" : "NULL") . ", "
+					. ($options['data'] ? "'" . original_to_query(json_encode($options['data'])) . "'" : "NULL") . ", ";
+			
+			if( $options['exception'] ) {
+	
+				$e = $options['exception'];
+				
+				$jsonE = array(
+					'msg' => $e->getMessage(),
+					'trace' => $e->getTraceAsString(),
+					'file' => $e->getFile(),
+					'line' => $e->getLine()
+				);
+				
+				if( $sqlError['message']) $jsonE['sql_error'] = $sqlError;
+				
+				// putting this here for reference in case we ever get any utf issues
+				// $encodedArray = array_map(utf8_encode, $rawArray);
+				
+				$sql .= "'" . original_to_query(json_encode($jsonE)) . "'";
+				
+			} else {
+				
+				$sql .= "NULL";
+				
+			}
+			
+			$sql .= ")";
+	
+			if( !$db->sql_query($sql) ) {
+	
+				throw new QueryException('Could not insert into log_events', $sql);
+	
+			}
+			
+		} catch( Exception $e ) {
+
+			$backupFileLog = true;
+			
+		}
+		
+		if( $backupFileLog || $options['to_file'] ) {
+
+			// Backup file log
+			$contents = '<div style="margin: 20px 0">
+				<table><tr><td valign="top"><b>Event: </b></td><td>' . h($eventType) . '</tr>' .
+				($options['message'] ? '<tr><td valign="top"><b>Message: </b></td><td>' . h($options['message']) . '</td></tr>' : '');
+			
+			if( $options['exception'] ) {
+				
+				/**
+				 * @var Exception $e
+				 */
+				$e = $options['exception'];
+
+				$eMessage = '<div>';
+				$eMessage .= '<b>Fatal error</b>:  Uncaught exception \'' . get_class($e) . '\' with message ';
+				$eMessage .= $e->getMessage() . '<br>';
+				$eMessage .= 'Stack trace:<pre>' . $e->getTraceAsString() . '</pre>';
+				$eMessage .= 'thrown in <b>' . $e->getFile() . '</b> on line <b>' . $e->getLine() . '</b><br>';
+				$eMessage .= '</div>';
+				
+				$sqlError = $db->sql_error();
+				
+				if( $sqlError['message'] ) $eMessage .= "\n\nsql_error: " . print_r($db->sql_error(),1);
+				
+				$contents .= '<tr><td valign="top"><b>Exception: </b></td><td>' . $eMessage . '</td></tr>';
+				
+			}
+				
+			$contents .= ($options['data'] ? '<tr><td valign="top"><b>Data: </b></td><td>' . nl2br(h(print_r($options['data'], 1))) . '</td></tr>' : '') .
+			'</table>';
+			
+			$fileName = self::convertEventTypeToFilename($eventType);
+			$path = $root_path . 'logs/' . $fileName;
+			
+			$handle = fopen($path, 'a');
+			fwrite($handle, $contents);
+			fclose($handle);
+			
+		}
+		
+	}
+
+}

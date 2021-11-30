@@ -2,10 +2,14 @@
 
 # init local files
 mkdir -p ../local
+mkdir -p ../logs
 echo "<?php\
 \
 if( !defined('IN_SCRIPT') ) die( \"Hacking attempt\" );\
 " > ../local/constants.php
+
+# chmod dirs
+chmod 0777 ../logs
 
 # chmod files
 chmod +x *.sh
