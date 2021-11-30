@@ -3,7 +3,7 @@
 # init local files
 mkdir -p ../local
 mkdir -p ../logs
-echo "<?php\
+echo "<?php\n\n\
 \
 if( !defined('IN_SCRIPT') ) die( \"Hacking attempt\" );\
 " > ../local/constants.php
@@ -18,13 +18,13 @@ chmod +x ../daemon/*
 chmod +x ../cron/*.sh
 chmod +x ../devel/cpp-redis-pipe/*.sh
 
-# general dependencies
-sudo apt update
-sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python unzip ufw zip g++ make cmake git
-
 # webmin repo + key
 echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee /etc/apt/sources.list.d/webmin.list > /dev/null
 wget -q -O- http://www.webmin.com/jcameron-key.asc | sudo apt-key add
+
+# general dependencies
+sudo apt update
+sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python unzip ufw zip g++ make cmake git
 
 #install webmin
 sudo apt install webmin
@@ -55,8 +55,8 @@ sudo hostnamectl set-hostname "${BGCDN_HOSTNAME}"
 echo "mysql-server mysql-server/root_password password $BGCDN_MYSQL_ROOT_PASS" | sudo debconf-set-selections
 echo "mysql-server mysql-server/root_password_again password $BGCDN_MYSQL_ROOT_PASS" | sudo debconf-set-selections
 echo 'Installing mysql ..'
-sudo apt-get install mysql-server -y > /dev/null 2>&1
-sudo apt-get install mysql-client expect -y > /dev/null 2>&1
+sudo apt-get install mysql-server -y
+sudo apt-get install mysql-client expect -y
 echo "+-----------------------------+"
 
 # secure MySQL installation
@@ -71,7 +71,7 @@ sudo mysql --execute="USE mysql;\
 CREATE USER '${MYSQL_BGCDN_USER}'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_BGCDN_PW}';\
 GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_BGCDN_USER}'@'localhost';\
 FLUSH PRIVILEGES;"
-echo "\
+echo "\n\
 define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');\
 " >> ../local/constants.php
 unset MYSQL_BGCDN_PW
@@ -135,22 +135,24 @@ sudo usermod -a -G www-data bgcdn
 
 # install composer extensions
 cd /home/bgcdn
-composer require gabrielelana/byte-units
-composer require guzzlehttp/guzzle:^7
-#composer require obregonco/backblaze-b2
-composer config repositories.backblaze-b2 vcs https://github.com/dliebner/backblaze-b2
-composer require dliebner/backblaze-b2:dev-master
-
+su bgcdn -c "composer require gabrielelana/byte-units"
+su bgcdn -c "composer require guzzlehttp/guzzle:^7"
+#su bgcdn -c "composer require obregonco/backblaze-b2"
+su bgcdn -c "composer config repositories.backblaze-b2 vcs https://github.com/dliebner/backblaze-b2"
+su bgcdn -c "composer require dliebner/backblaze-b2:dev-master"
 cd /home/bgcdn/install
 
 # replace occurences of BGCDN_HOSTNAME in source files
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" ../devel/cpp-redis-pipe/redis-pipe.cc
 
 # build stuff
-../devel/cpp-redis-pipe/build.sh
+cd /home/bgcdn/devel/cpp-redis-pipe/
+./build.sh
+cd /home/bgcdn/install
 
 # copy files
 sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sudo cp bgcdn-apache-ssl.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}-ssl.conf
 sudo cp ../devel/cpp-redis-pipe/redis-pipe ../scripts/
 sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
 sudo cp bgcdn-sudoers /etc/sudoers.d/
@@ -159,6 +161,7 @@ sudo cp bgcdn-docker-events.service /etc/systemd/system/
 
 # replace occurences of BGCDN_HOSTNAME in copied conf files
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}-ssl.conf
 # replace occurences of BGCDN_HOSTNAME in copied scripts
 sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /home/bgcdn/scripts/redis-pipe.sh
 
