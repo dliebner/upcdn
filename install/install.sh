@@ -86,7 +86,7 @@ sudo mysql < schema.sql
 sudo ufw allow 'Apache Full'
 sudo ufw allow 10000
 
-sudo a2enmod proxy_fcgi setenvif expires headers
+sudo a2enmod rewrite proxy_fcgi setenvif expires headers
 sudo a2enconf php7.4-fpm
 
 # install phpMyAdmin
