@@ -8,4 +8,6 @@ require_once( $root_path. 'common.php' );
 require_once( $root_path. 'includes/Email.php' );
 
 $email = new Email("dliebner@gmail.com", "Email test", "Hey bud it's me. This is a test email.");
-$email->send();
+$res = $email->send();
+
+echo "mail was " . ($res ? "" : "not ") . "sent";
