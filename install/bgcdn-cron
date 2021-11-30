@@ -5,9 +5,6 @@
 # Maintains running total of bandwidth
 * * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/add-bw-chunk.php
 
-# Update disk free/total space
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/disk-stats.php
-
 # Cloud uploads
 * * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/cloud-upload-queue.php
 
