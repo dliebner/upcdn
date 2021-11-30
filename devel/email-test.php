@@ -14,7 +14,7 @@ echo "mail was " . ($res ? "" : "not ") . "sent\n";
 
 if( !$res ) {
 
-	print_r(error_get_last());
+	print_r([error_get_last()]);
 	echo "\n";
 
 }
