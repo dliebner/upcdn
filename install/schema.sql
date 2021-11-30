@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 30, 2021 at 04:28 AM
+-- Generation Time: Nov 30, 2021 at 04:53 AM
 -- Server version: 8.0.27-0ubuntu0.20.04.1
 -- PHP Version: 7.4.3
 
@@ -15,6 +15,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `bgcdn_main`
 --
+CREATE DATABASE IF NOT EXISTS `bgcdn_main` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+USE `bgcdn_main`;
 
 -- --------------------------------------------------------
 

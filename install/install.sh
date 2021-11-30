@@ -78,7 +78,7 @@ unset MYSQL_BGCDN_PW
 sudo service mysql restart
 
 # Import db schema
-sudo mysql bgcdn_main < schema.sql
+sudo mysql < schema.sql
 
 # install postfix + dovecot
 # ./install-postfix-dovecot.sh -p "${BGCDN_MYSQL_ROOT_PASS}" -d "${BGCDN_HOSTNAME}" -b "${MYSQL_BGCDN_PW}"
