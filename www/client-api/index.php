@@ -29,6 +29,11 @@ function default_exception_handler($e) {
 }
 
 function handleAjaxException(Exception $e, $options = array()) {
+
+	Logger::logEvent("client-api exception", [
+		'email' => true,
+		'exception' => $e
+	]);
 		
 	switch( get_class($e) ) {
 

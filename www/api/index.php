@@ -9,6 +9,89 @@ use dliebner\B2\Client;
 include_once( $root_path . 'common.php' );
 require_once( $root_path . 'includes/JSONEncrypt.php');
 
+function default_exception_handler($e) {
+	
+	$eClass = get_class($e);
+	
+	if( in_array($eClass, array('QueryException','GeneralException','SilentAjaxException','GeneralExceptionWithData')) ) {
+	
+		handleAjaxException($e);
+		
+	} else {
+
+		echo '<div>';
+		echo '<b>Fatal error</b>:  Uncaught exception \'' . get_class($e) . '\' with message ';
+		echo $e->getMessage() . '<br>';
+		echo 'Stack trace:<pre>' . $e->getTraceAsString() . '</pre>';
+		echo 'thrown in <b>' . $e->getFile() . '</b> on line <b>' . $e->getLine() . '</b><br>';
+		echo '</div>';
+		
+	}
+
+}
+
+function handleAjaxException(Exception $e, $options = array()) {
+
+	Logger::logEvent("api exception", [
+		'email' => true,
+		'exception' => $e
+	]);
+		
+	switch( get_class($e) ) {
+
+		case 'GeneralException':
+
+			AjaxResponse::returnError($e->getMessage(), null, $options);
+
+		case 'GeneralExceptionWithData':
+
+			AjaxResponse::returnError($e->getMessage(), debugEnabled() ? $e->data : null, $options);
+			
+		case 'SilentAjaxException':
+
+			die( AjaxResponse::status('silentError', $e->getMessage(), null, $options) );
+		
+		case 'QueryException':
+
+			global $db;
+
+			if( debugEnabled() ) {
+			
+				AjaxResponse::criticalDie(
+					$e->getMessage() . "\n"
+						. 'on line ' . $e->getLine() . "\n"
+						. ' in ' . $e->getFile() . "\n\n"
+						. $e->sql,
+					array('sql' => $e->sql, 'err' => $db->sql_error()),
+					$options
+				);
+
+			} else {
+			
+				AjaxResponse::criticalDie(
+					$e->getMessage() . "\n"
+						. 'on line ' . $e->getLine() . "\n"
+						. ' in ' . $e->getFile(),
+					[],
+					$options
+				);
+
+			}
+			
+			break;
+			
+		default:
+
+			AjaxResponse::criticalDie($e->getMessage(), null, $options);
+			
+			break;
+		
+	}
+	
+}
+
+set_exception_handler('default_exception_handler');
+
 /**
  * Client receiving from Hub
  */

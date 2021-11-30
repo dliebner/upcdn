@@ -2257,7 +2257,16 @@ class Logger {
 	 */
 	public static function logEvent($eventType, $options = array()) {
 		
-		global $db, $root_path;
+		global $root_path;
+
+		$db = db();
+
+		if( ($e = $options['exception']) && get_class($e) == 'GeneralExceptionWithData' ) {
+
+			$options['data'] = $options['data'] ?: [];
+			$options['data']['_exception_data'] = $e->data;
+
+		}
 		
 		if( $options['email'] ) {
 			
