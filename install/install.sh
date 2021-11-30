@@ -3,10 +3,10 @@
 # init local files
 mkdir -p ../local
 mkdir -p ../logs
-echo "<?php\n\n\
-\
-if( !defined('IN_SCRIPT') ) die( \"Hacking attempt\" );\
-" > ../local/constants.php
+echo "<?php
+
+if( !defined('IN_SCRIPT') ) die('Hacking attempt');
+" | sudo tee ../local/constants.php > /dev/null
 
 # chmod dirs
 chmod 0777 ../logs
@@ -48,6 +48,11 @@ read -p "CDN server hostname: " BGCDN_HOSTNAME
 read -sp "MySQL root password (keep a copy handy): " BGCDN_MYSQL_ROOT_PASS
 echo
 
+# Set mysql root credentials for root user
+echo "[client]
+user = \"root\"
+password = \"${BGCDN_MYSQL_ROOT_PASS}\"" | sudo tee /root/my.cnf > /dev/null
+
 # Set hostname
 sudo hostnamectl set-hostname "${BGCDN_HOSTNAME}"
 
@@ -71,14 +76,16 @@ sudo mysql --execute="USE mysql;\
 CREATE USER '${MYSQL_BGCDN_USER}'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_BGCDN_PW}';\
 GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_BGCDN_USER}'@'localhost';\
 FLUSH PRIVILEGES;"
-echo "\n\
-define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');\
-" >> ../local/constants.php
-unset MYSQL_BGCDN_PW
-sudo service mysql restart
 
 # Import db schema
 sudo mysql < schema.sql
+
+# set bgcdn_user pw in constants.php
+echo "
+define('MYSQL_BGCDN_PW', '${MYSQL_BGCDN_PW}');
+" | sudo tee -a ../local/constants.php > /dev/null
+unset MYSQL_BGCDN_PW
+sudo service mysql restart
 
 # install postfix + dovecot
 # ./install-postfix-dovecot.sh -p "${BGCDN_MYSQL_ROOT_PASS}" -d "${BGCDN_HOSTNAME}" -b "${MYSQL_BGCDN_PW}"
