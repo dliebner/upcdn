@@ -27,6 +27,8 @@ while( time() - 60 < $start ) {
 
 	if( $ret && ($_404uris = $ret[0]) ) {
 
+		print_r($_404uris);
+
 		$missingTailpaths = [];
 		foreach( array_keys($_404uris) as $path ) {
 
@@ -99,6 +101,8 @@ while( time() - 60 < $start ) {
 		}
 
 		if( $missingTailpaths ) {
+
+			print_r($missingTailpaths);
 
 			// Query File Oracle (hub) for file details
 			CDNClient::postToHub(CDNClient::HUB_ACTION_FILE_ORACLE_MISSING_PATHS, [
