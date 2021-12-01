@@ -76,7 +76,7 @@ int main() {
                const std::string key = (std::sprintf(buf, "bgcdn:bw_30sec_exp_%d", expires), buf);
                client.incrby(key, bytes, cb).expireat(key, expires, cb);
             }
-            if( status == 404 && domain == "${BGCDN_HOSTNAME}" ) {
+            if( status == 404 && domain == "$BGCDN_HOSTNAME" ) {
                client.hsetnx("bgcdn:404_uris", uri, "1");
             }
             // commit requests
