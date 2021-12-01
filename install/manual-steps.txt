@@ -1,26 +1,53 @@
+#
+# Allow apache status from our IP
+#
+
 vi /etc/apache2/mods-enabled/status.conf
 # Require ip 8.8.8.8
 
+
+#
+# Set mpm_worker config
+#
+
 vi /etc/apache2/mods-enabled/mpm_worker.conf
 
-	# we want to allow 10000 threads in total
-	# 10000 / 25 processes = 400
-	<IfModule mpm_worker_module>
-		ServerLimit 25
-		StartServers 2
-		MaxRequestWorkers 10000
-		MinSpareThreads 401
-		MaxSpareThreads 800
-		ThreadLimit 400
-		ThreadsPerChild 400
-		KeepAlive On
-		KeepAliveTimeout 1
-		MaxConnectionsPerChild 10000000
-	</IfModule>
+# we want to allow 10000 threads in total
+# 10000 / 25 processes = 400
+<IfModule mpm_worker_module>
+	ServerLimit 25
+	StartServers 2
+	MaxRequestWorkers 10000
+	MinSpareThreads 401
+	MaxSpareThreads 800
+	ThreadLimit 400
+	ThreadsPerChild 400
+	KeepAlive On
+	KeepAliveTimeout 1
+	MaxConnectionsPerChild 10000000
+</IfModule>
+
+
+#
+# Set php-fpm config
+#
 
 vi /etc/php/7.4/fpm/pool.d/www.conf
 # pm.max_children = 10
 # pm.max_requests = 100000
 
-# run certbot
-certbot --apache
+
+#
+# Restart services
+#
+
+service php7.4-fpm restart
+service apache2 restart
+
+
+#
+# Set bgcdn_main.config variables
+#
+
+monthly_bandwidth_alloc		X TB
+port_speed					X Gbit
