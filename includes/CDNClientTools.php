@@ -1885,16 +1885,16 @@ class TranscodingJob {
 class Cron {
 
 	public static function downloadSourcesFromCloud() {
-		
-		$client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
-			'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
-			'applicationKey' => Config::get('b2_application_key'),
-		]);
-		$client->version = 2; // By default will use version 1
-
-		$downloader = new \dliebner\B2\ParallelDownloader($client, 10);
 
 		if( $jobs = TranscodingJob::getSourceDownloadJobs() ) {
+		
+			$client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
+				'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
+				'applicationKey' => Config::get('b2_application_key'),
+			]);
+			$client->version = 2; // By default will use version 1
+	
+			$downloader = new \dliebner\B2\ParallelDownloader($client, 10);
 
 			TranscodingJob::setCloudDownloadSrcInProgress($jobs);
 
