@@ -2034,6 +2034,28 @@ class MissingFile {
 
 	}
 
+	public function getTmpSavePath() {
+
+		return $this->localSavePath . '.part';
+
+	}
+
+	public function moveTmpToFinal() {
+
+		if( file_exists($this->getTmpSavePath()) ) {
+
+			return rename($this->getTmpSavePath(), $this->localSavePath);
+
+		}
+
+	}
+
+	public function deleteTmp() {
+
+		if( file_exists($this->getTmpSavePath()) ) return unlink($this->getTmpSavePath());
+
+	}
+
 }
 
 class MissingFileDownloadResult {
@@ -2173,77 +2195,92 @@ class MissingFileDownloadLane {
 
         if( $nextFile = $this->parallelDownloader->getNextFile() ) {
 
-			$doUnzip = function() use ($nextFile) {
+			$onFileFailed = function() use ($nextFile) {
 
-				if( $nextFile->isZipped ) {
+				$nextFile->deleteTmp();
+				$this->failedFiles[] = $nextFile;
 
-					// Unzip the downloaded file
-					$zipFile = $nextFile->localSavePath;
+			};
 
-					$zip = new ZipArchive;
+			$onFileDownloaded = function() use ($nextFile, $onFileFailed) {
 
-					if( $zip->open($zipFile) ) {
+				if( $nextFile->moveTmpToFinal() ) {
 
-						if( !$zip->extractTo( dirname($zipFile) ) ) {
-
-							Logger::logEvent("unzip failed", [
+					if( $nextFile->isZipped ) {
+	
+						// Unzip the downloaded file
+						$zipFile = $nextFile->localSavePath;
+	
+						$zip = new ZipArchive;
+	
+						if( $zip->open($zipFile) ) {
+	
+							if( !$zip->extractTo( dirname($zipFile) ) ) {
+	
+								Logger::logEvent("unzip failed", [
+									'email' => true,
+									'data' => [
+										'$root_path' => $GLOBALS['root_path'],
+										'__DIR__' => __DIR__,
+										'dirname($zipFile)' => dirname($zipFile),
+										'file' => $nextFile,
+									]
+								]);
+	
+							}
+	
+							$zip->close();
+	
+							//echo $zipFile . " unzipped\n";
+	
+						} else {
+	
+							Logger::logEvent("zip open failed", [
 								'email' => true,
 								'data' => [
 									'$root_path' => $GLOBALS['root_path'],
 									'__DIR__' => __DIR__,
-									'dirname($zipFile)' => dirname($zipFile),
 									'file' => $nextFile,
 								]
 							]);
-
+	
 						}
-
-						$zip->close();
-
-						//echo $zipFile . " unzipped\n";
-
-					} else {
-
-						Logger::logEvent("zip open failed", [
-							'email' => true,
-							'data' => [
-								'$root_path' => $GLOBALS['root_path'],
-								'__DIR__' => __DIR__,
-								'file' => $nextFile,
-							]
-						]);
-
+	
 					}
+
+					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+
+				} else {
+
+					$onFileFailed();
 
 				}
 
 			};
 
-			$b2Download = function() use ($nextFile, $doUnzip) {
+			$b2Download = function() use ($nextFile, $onFileDownloaded, $onFileFailed) {
 
 				// If direct transcoding server download fails, attempt to download from cloud
 				$b2Client = $this->parallelDownloader->b2Client;
 				
 				$requestUrl = $b2Client->getB2FileRequestUrl(Config::get('b2_bucket_name'), $nextFile->b2CloudPath);
 				$requestOptions = [
-					'sink' => $nextFile->localSavePath
+					'sink' => $nextFile->getTmpSavePath()
 				];
 
-				//echo "attempting to download b2 file from $requestUrl to " . $nextFile->localSavePath . "\n";
+				//echo "attempting to download b2 file from $requestUrl to " . $nextFile->getTmpSavePath() . "\n";
 
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
-				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($nextFile, $doUnzip) {
+				return $asyncRequest->begin()->then(function(\Psr\Http\Message\ResponseInterface $response) use ($onFileDownloaded) {
 					
-					$doUnzip();
-
-					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+					$onFileDownloaded();
 
 					return $this->downloadNextFile();
 					
-				}, function(\Exception $reason) use ($nextFile, $requestUrl) {
+				}, function(\Exception $reason) use ($onFileFailed, $requestUrl) {
 
-					$this->failedFiles[] = $nextFile;
+					$onFileFailed();
 
 					//echo "$requestUrl failed: " . $reason->getMessage() . "\n";
 
@@ -2254,7 +2291,7 @@ class MissingFileDownloadLane {
 			};
 
 			// Create directory if necessary
-			$dirname = dirname($nextFile->localSavePath);
+			$dirname = dirname($nextFile->getTmpSavePath());
 			if( !file_exists($dirname)  && !mkdir_recursive($dirname, 0777) ) throw new Exception("Unable to create dir: $dirname");
 
 			if( $nextFile->clientServerSourceUrls ) {
@@ -2262,24 +2299,22 @@ class MissingFileDownloadLane {
 				// Attempt to download file directly from transcoding server
 				$guzzleClient = $this->parallelDownloader->guzzleClient;
 
-				$downloadNextSourceUrl = function($clientServerSourceUrls, $i = 0) use (&$downloadNextSourceUrl, $nextFile, $guzzleClient, $doUnzip, $b2Download) {
+				$downloadNextSourceUrl = function($clientServerSourceUrls, $i = 0) use (&$downloadNextSourceUrl, $nextFile, $guzzleClient, $onFileDownloaded, $b2Download) {
 
 					if( $sourceUrl = $clientServerSourceUrls[$i++] ) {
 
-						//echo "attempting to download " . $nextFile->clientServerSourceUrls . " to " . $nextFile->localSavePath . "\n";
+						//echo "attempting to download " . $nextFile->clientServerSourceUrls . " to " . $nextFile->getTmpSavePath() . "\n";
 		
 						return $guzzleClient->requestAsync('GET', $sourceUrl, [
 							'connect_timeout' => 1,
-							'sink' => $nextFile->localSavePath
-						])->then(function() use ($nextFile, $doUnzip) {
+							'sink' => $nextFile->getTmpSavePath()
+						])->then(function() use ($onFileDownloaded) {
 		
-							$doUnzip();
-		
-							$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+							$onFileDownloaded();
 		
 							return $this->downloadNextFile();
 		
-						}, function(Exception $e) use ($i, $downloadNextSourceUrl, $clientServerSourceUrls) {
+						}, function(Exception $e) use ($nextFile, $i, $downloadNextSourceUrl, $clientServerSourceUrls) {
 		
 							//echo "direct download " . $nextFile->clientServerSourceUrls . " failed: " . $e->getMessage() . "\n";
 		
