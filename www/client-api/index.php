@@ -8,6 +8,11 @@ include_once( $root_path . 'common.php' );
 require_once( $root_path . 'includes/JSONEncrypt.php');
 
 function default_exception_handler($e) {
+
+	Logger::logEvent("client-api exception", [
+		'email' => true,
+		'exception' => $e
+	]);
 	
 	$eClass = get_class($e);
 	
@@ -29,11 +34,6 @@ function default_exception_handler($e) {
 }
 
 function handleAjaxException(Exception $e, $options = array()) {
-
-	Logger::logEvent("client-api exception", [
-		'email' => true,
-		'exception' => $e
-	]);
 		
 	switch( get_class($e) ) {
 
