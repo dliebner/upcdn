@@ -1984,8 +1984,8 @@ class Cron {
 			$downloader->doDownload();
 
 			print_r([
-				'downloaded' => $downloader->getAllDownloadedFiles(),
-				'failed' => $downloader->getAllFailedFiles()
+				'downloaded' => count($downloader->getAllDownloadedFiles()),
+				'failed' => count($downloader->getAllFailedFiles())
 			]);
 
 			foreach( $downloader->getAllFailedFiles() as $failedFileOptions ) {
