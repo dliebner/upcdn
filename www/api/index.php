@@ -276,6 +276,16 @@ switch( $payload->action ) {
 
 		break;
 
+	case CDNClient::CLIENT_ACTION_DOWNLOAD_VIDEO_VERSIONS:
+
+		if( !$downloadVersions = $params->downloadVersions ) AjaxResponse::criticalDie("Missing downloadVersions");
+
+		$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
+
+		CDNClient::downloadVideoVersions($downloadVersions);
+
+		break;
+
 	default:
 
 		AjaxResponse::criticalDie('Invalid action: ' . $payload->action);

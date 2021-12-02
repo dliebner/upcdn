@@ -29,6 +29,7 @@ class CDNClient {
 	const CLIENT_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
 	const CLIENT_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
 	const CLIENT_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
+	const CLIENT_ACTION_DOWNLOAD_VIDEO_VERSIONS = 'downloadVideoVersions';
 
 	public static function postToHub( $action, $params = array(), $options = array() ) {
 
@@ -226,6 +227,81 @@ class CDNClient {
 		
 		return $response;
 		
+	}
+
+	protected static $b2Client;
+	public static function getB2Client() {
+
+		if( !self::$b2Client ) {
+
+			$b2Client = self::$b2Client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
+				'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
+				'applicationKey' => Config::get('b2_application_key'),
+			]);
+			$b2Client->version = 2; // By default will use version 1
+
+		}
+
+		return self::$b2Client;
+
+	}
+
+	/** @param MissingFileDownloader $missingFileDownloader */
+	public static function downloadVideoVersions(array $downloadVersions, &$missingFileDownloader = null) {
+
+		$guzzleClient = new \GuzzleHttp\Client();
+		$b2Client = self::getB2Client();
+		$missingFileDownloader = new MissingFileDownloader($guzzleClient, $b2Client, 10);
+
+		$clientServerSourceUrls = [];
+
+		foreach( $downloadVersions as $version ) {
+
+			$versionFilename = $version['versionFilename'];
+
+			if( $hostnames = $version['clientServerSourceHostnames'] ) {
+
+				foreach($hostnames as $cdnHostname) {
+			
+					if( $cdnHostname !== Config::get('hostname') ) {
+
+						$urlBase = 'http://' . $cdnHostname . '/';
+
+						switch( $version['type'] ) {
+
+							case 'mp4':
+
+								$clientServerSourceUrls[] = $urlBase . VideoPath::mp4UriPath($versionFilename);
+
+								break;
+
+							case 'hls':
+
+								$clientServerSourceUrls[] = $urlBase . VideoPath::hlsZipUriPath($versionFilename);
+
+								break;
+
+						}
+
+					}
+
+				}
+
+			}
+
+			$missingFileDownloader->addFileToDownload(
+				new MissingFile(
+					($isHls = $version['type'] === 'hls') ? VideoPath::hlsZipLocalPath($versionFilename) : VideoPath::mp4LocalPath($versionFilename),
+					$isHls,
+					VideoPath::getVersionCloudPath($versionFilename, $version['type']),
+					$clientServerSourceUrls
+				)
+			);
+
+		}
+
+		$missingFileDownloader->doDownload();
+
 	}
 
 }
@@ -1887,12 +1963,8 @@ class Cron {
 	public static function downloadSourcesFromCloud() {
 
 		if( $jobs = TranscodingJob::getSourceDownloadJobs() ) {
-		
-			$client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
-				'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
-				'applicationKey' => Config::get('b2_application_key'),
-			]);
-			$client->version = 2; // By default will use version 1
+
+			$client = CDNClient::getB2Client();
 	
 			$downloader = new \dliebner\B2\ParallelDownloader($client, 10);
 
@@ -1945,14 +2017,14 @@ class MissingFile {
 
 	public $localSavePath;
 	public $isZipped;
-	public $transcodingServerUrl;
+	public $clientServerSourceUrls;
 	public $b2CloudPath;
 
-	public function __construct($localSavePath, $isZipped, $b2CloudPath, $transcodingServerUrl = null) {
+	public function __construct($localSavePath, $isZipped, $b2CloudPath, $clientServerSourceUrls = []) {
 		
 		$this->localSavePath = $localSavePath;
 		$this->isZipped = $isZipped;
-		$this->transcodingServerUrl = $transcodingServerUrl;
+		$this->clientServerSourceUrls = $clientServerSourceUrls;
 		$this->b2CloudPath = $b2CloudPath;
 
 	}
@@ -2156,32 +2228,46 @@ class MissingFileDownloadLane {
 			$dirname = dirname($nextFile->localSavePath);
 			if( !file_exists($dirname) ) mkdir_recursive($dirname);
 
-			if( $nextFile->transcodingServerUrl ) {
+			if( $nextFile->clientServerSourceUrls ) {
 
 				// Attempt to download file directly from transcoding server
 				$guzzleClient = $this->parallelDownloader->guzzleClient;
 
-				//echo "attempting to download " . $nextFile->transcodingServerUrl . " to " . $nextFile->localSavePath . "\n";
+				$downloadNextSourceUrl = function($clientServerSourceUrls, $i = 0) use (&$downloadNextSourceUrl, $nextFile, $guzzleClient, $doUnzip, $b2Download) {
 
-				return $guzzleClient->requestAsync('GET', $nextFile->transcodingServerUrl, [
-					'connect_timeout' => 1,
-					'sink' => $nextFile->localSavePath
-				])->then(function() use ($nextFile, $doUnzip) {
+					if( $sourceUrl = $clientServerSourceUrls[$i++] ) {
 
-					$doUnzip();
+						//echo "attempting to download " . $nextFile->clientServerSourceUrls . " to " . $nextFile->localSavePath . "\n";
+		
+						return $guzzleClient->requestAsync('GET', $sourceUrl, [
+							'connect_timeout' => 1,
+							'sink' => $nextFile->localSavePath
+						])->then(function() use ($nextFile, $doUnzip) {
+		
+							$doUnzip();
+		
+							$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+		
+							return $this->downloadNextFile();
+		
+						}, function(Exception $e) use ($i, $downloadNextSourceUrl, $clientServerSourceUrls) {
+		
+							//echo "direct download " . $nextFile->clientServerSourceUrls . " failed: " . $e->getMessage() . "\n";
+		
+							// If direct transcoding server download fails, attempt next download source
+							return $downloadNextSourceUrl($clientServerSourceUrls, $i);
+		
+						});
 
-					$this->downloadedFiles[] = new MissingFileDownloadResult($nextFile, true);
+					} else {
 
-					return $this->downloadNextFile();
+						return $b2Download();
 
-				}, function(Exception $e) use ($b2Download, $nextFile) {
+					}
 
-					//echo "direct download " . $nextFile->transcodingServerUrl . " failed: " . $e->getMessage() . "\n";
+				};
 
-					// If direct transcoding server download fails, attempt to download from cloud
-					return $b2Download();
-
-				});
+				return $downloadNextSourceUrl($nextFile->clientServerSourceUrls);
 
 			} else {
 

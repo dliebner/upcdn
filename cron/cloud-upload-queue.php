@@ -29,7 +29,6 @@ if( $cronProcessing && Config::loadConfig(true) && Config::get('cron_cloud_uploa
 //
 // Here is where we start the actual processing
 //
-use dliebner\B2\Client;
 use dliebner\B2\ParallelUploader;
 
 // Make sure to clear cron_cloud_upload_start on exit
@@ -40,19 +39,6 @@ register_shutdown_function(function() {
 });
 
 const B2_DEBUG_ON = true;
-
-/** @var Client */
-$client = null;
-
-$getClient = function() use (&$client) {
-
-	$client = new Client(Config::get('b2_master_key_id'), [
-		'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
-		'applicationKey' => Config::get('b2_application_key'),
-	]);
-	$client->version = 2; // By default will use version 1
-
-};
 
 while( time() - $maxWaitTime < $start ) {
 
@@ -66,8 +52,7 @@ while( time() - $maxWaitTime < $start ) {
 		$srcCloudUploads = [];
 		$versionCloudUploads = [];
 
-		$getClient();
-
+		$client = CDNClient::getB2Client();
 		$bucketId = $client->getBucketFromName(Config::get('b2_bucket_name'))->getId();
 		$pup = new ParallelUploader($client, $bucketId);
 		$pup->numUploadLanes = TranscodingJob::CLOUD_UPLOAD_MAX_CONCURRENT;

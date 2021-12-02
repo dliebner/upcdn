@@ -114,56 +114,7 @@ while( time() - 60 < $start ) {
 
 						print_r($downloadVersions);
 
-						$guzzleClient = new \GuzzleHttp\Client();
-
-						$b2Client = new \dliebner\B2\Client(Config::get('b2_master_key_id'), [
-							'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
-							'applicationKey' => Config::get('b2_application_key'),
-						]);
-						$b2Client->version = 2; // By default will use version 1
-
-						$missingFileDownloader = new MissingFileDownloader($guzzleClient, $b2Client, 10);
-
-						foreach( $downloadVersions as $version ) {
-
-							$versionFilename = $version['versionFilename'];
-
-							$transcodingServerUrl = null;
-
-							if( $version['transcodedByHostname'] && $version['transcodedByHostname'] !== Config::get('hostname') ) {
-
-								$transcodingServerUrlBase = 'http://' . $version['transcodedByHostname'] . '/';
-
-								switch( $version['type'] ) {
-
-									case 'mp4':
-
-										$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::mp4UriPath($versionFilename);
-
-										break;
-
-									case 'hls':
-
-										$transcodingServerUrl = $transcodingServerUrlBase . VideoPath::hlsZipUriPath($versionFilename);
-
-										break;
-
-								}
-
-							}
-
-							$missingFileDownloader->addFileToDownload(
-								new MissingFile(
-									($isHls = $version['type'] === 'hls') ? VideoPath::hlsZipLocalPath($versionFilename) : VideoPath::mp4LocalPath($versionFilename),
-									$isHls,
-									VideoPath::getVersionCloudPath($versionFilename, $version['type']),
-									$transcodingServerUrl
-								)
-							);
-
-						}
-
-						$missingFileDownloader->doDownload();
+						CDNClient::downloadVideoVersions($downloadVersions, $missingFileDownloader);
 
 						print_r([
 							'downloadedFiles' => $missingFileDownloader->getAllDownloadedFiles(),
