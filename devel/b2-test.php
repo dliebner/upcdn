@@ -8,23 +8,23 @@ require_once( $root_path. 'common.php' );
 
 error_reporting(E_ALL);
 
-use dliebner\B2\Client;
-use dliebner\B2\Bucket;
+$guzzleClient = new \GuzzleHttp\Client;
+$b2Client = CDNClient::getB2Client();
+$downloader = new MissingFileDownloader($guzzleClient, $b2Client);
 
-$client = new Client(Config::get('b2_master_key_id'), [
-	'keyId' => Config::get('b2_application_key_id'), // optional if you want to use master key (account Id)
-	'applicationKey' => Config::get('b2_application_key'),
+start_timer('download');
+
+$downloader->addFileToDownload(new MissingFile(
+    './dfile',
+    'false',
+    'fake/path'
+));
+
+$downloader->doDownload();
+
+print_r([
+    'downloaded' => $downloader->getAllDownloadedFiles(),
+    'failed' => $downloader->getAllFailedFiles()
 ]);
-$client->version = 2; // By default will use version 1
 
-start_timer('upload');
-
-$file = $client->upload([
-    'BucketName' => 'bidglass-creatives',
-    'FileName' => 'test/game_hls.zip',
-    'Body' => fopen('game_hls.zip', 'r')
-]);
-
-print_r($file);
-
-echo "\n" . stop_timer('upload') . "\n";
+echo "\n" . stop_timer('download') . "\n";
