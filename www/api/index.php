@@ -284,6 +284,8 @@ switch( $payload->action ) {
 
 		CDNClient::downloadVideoVersions($downloadVersions);
 
+		AjaxResponse::returnSuccess();
+
 		break;
 
 	default:
