@@ -3,13 +3,14 @@
 # init local files
 mkdir -p ../local
 mkdir -p ../logs
+mkdir -p ../transcoding
 echo "<?php
 
 if( !defined('IN_SCRIPT') ) die('Hacking attempt');
 " | sudo tee ../local/constants.php > /dev/null
 
 # chmod dirs
-chmod 0777 ../logs
+chmod 0777 ../logs ../transcoding
 
 # chmod files
 chmod +x *.sh
