@@ -2268,7 +2268,7 @@ class MissingFileDownloadLane {
 					'sink' => $nextFile->getTmpSavePath()
 				];
 
-				//echo "attempting to download b2 file from $requestUrl to " . $nextFile->getTmpSavePath() . "\n";
+				echo "attempting to download b2 file from $requestUrl to " . $nextFile->getTmpSavePath() . "\n";
 
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
@@ -2282,7 +2282,7 @@ class MissingFileDownloadLane {
 
 					$onFileFailed();
 
-					//echo "$requestUrl failed: " . $reason->getMessage() . "\n";
+					echo "$requestUrl failed: " . $reason->getMessage() . "\n";
 
 					return $this->downloadNextFile();
 
@@ -2299,11 +2299,11 @@ class MissingFileDownloadLane {
 				// Attempt to download file directly from transcoding server
 				$guzzleClient = $this->parallelDownloader->guzzleClient;
 
-				$downloadNextSourceUrl = function($clientServerSourceUrls, $i = 0) use (&$downloadNextSourceUrl, $nextFile, $guzzleClient, $onFileDownloaded, $b2Download) {
+				$downloadNextSourceUrl = function($i = 0) use (&$downloadNextSourceUrl, $nextFile, $guzzleClient, $onFileDownloaded, $b2Download) {
 
-					if( $sourceUrl = $clientServerSourceUrls[$i++] ) {
+					if( $sourceUrl = $nextFile->clientServerSourceUrls[$i] ) {
 
-						//echo "attempting to download " . $nextFile->clientServerSourceUrls . " to " . $nextFile->getTmpSavePath() . "\n";
+						echo "attempting to download " . $sourceUrl . " to " . $nextFile->getTmpSavePath() . "\n";
 		
 						return $guzzleClient->requestAsync('GET', $sourceUrl, [
 							'connect_timeout' => 1,
@@ -2314,12 +2314,12 @@ class MissingFileDownloadLane {
 		
 							return $this->downloadNextFile();
 		
-						}, function(Exception $e) use ($nextFile, $i, $downloadNextSourceUrl, $clientServerSourceUrls) {
+						}, function(Exception $e) use ($sourceUrl, $i, $downloadNextSourceUrl) {
 		
-							//echo "direct download " . $nextFile->clientServerSourceUrls . " failed: " . $e->getMessage() . "\n";
+							echo "direct download " . $sourceUrl . " failed: " . $e->getMessage() . "\n";
 		
 							// If direct transcoding server download fails, attempt next download source
-							return $downloadNextSourceUrl($clientServerSourceUrls, $i);
+							return $downloadNextSourceUrl($i + 1);
 		
 						});
 
@@ -2331,7 +2331,7 @@ class MissingFileDownloadLane {
 
 				};
 
-				return $downloadNextSourceUrl($nextFile->clientServerSourceUrls);
+				return $downloadNextSourceUrl();
 
 			} else {
 
