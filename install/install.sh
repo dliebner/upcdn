@@ -10,7 +10,7 @@ if( !defined('IN_SCRIPT') ) die('Hacking attempt');
 " | sudo tee ../local/constants.php > /dev/null
 
 # chmod dirs
-chmod 0777 ../logs ../transcoding
+chmod 0777 ../v ../logs ../transcoding
 
 # chmod files
 chmod +x *.sh

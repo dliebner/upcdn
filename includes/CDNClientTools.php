@@ -1198,7 +1198,7 @@ class TranscodingJob {
 		$dir = $this->inProgressDir();
 		if( !is_dir($dir) ) {
 	
-			if( !mkdir_recursive($dir, 0775)) {
+			if( !mkdir_recursive($dir, 0777)) {
 				
 				throw new Exception("Could not create progress dir.");
 				
@@ -1327,7 +1327,7 @@ class TranscodingJob {
 		$outDir = $dir . CDNClient::DIR_TRANSCODE_OUTPUT . ($this->jobSettings->saveAsHls ? $this->versionFilename . '/': '');
 		if( !is_dir($outDir) ) {
 	
-			if( !mkdir_recursive($outDir, 0775)) {
+			if( !mkdir_recursive($outDir, 0777)) {
 				
 				$this->unsetTranscodeStarted();
 				throw new Exception("Could not create output dir.");
@@ -1443,7 +1443,7 @@ class TranscodingJob {
 			}
 
 			// Create missing path directories
-			if( !file_exists($dirName) && !mkdir_recursive($dirName, 0775)) {
+			if( !file_exists($dirName) && !mkdir_recursive($dirName, 0777)) {
 				
 				throw new Exception("Could not create dir: $dirName");
 				
@@ -2231,7 +2231,7 @@ class MissingFileDownloadLane {
 
 			// Create directory if necessary
 			$dirname = dirname($nextFile->localSavePath);
-			if( !file_exists($dirname)  && !mkdir_recursive($dirname) ) throw new Exception("Unable to create dir: $dirname");
+			if( !file_exists($dirname)  && !mkdir_recursive($dirname, 0777) ) throw new Exception("Unable to create dir: $dirname");
 
 			if( $nextFile->clientServerSourceUrls ) {
 
