@@ -2268,7 +2268,7 @@ class MissingFileDownloadLane {
 					'sink' => $nextFile->getTmpSavePath()
 				];
 
-				echo "attempting to download b2 file from $requestUrl to " . $nextFile->getTmpSavePath() . "\n";
+				//echo "attempting to download b2 file from $requestUrl to " . $nextFile->getTmpSavePath() . "\n";
 
 				$asyncRequest = new \dliebner\B2\AsyncRequestWithRetries($b2Client, 'GET', $requestUrl, $requestOptions);
 
@@ -2282,7 +2282,7 @@ class MissingFileDownloadLane {
 
 					$onFileFailed();
 
-					echo "$requestUrl failed: " . $reason->getMessage() . "\n";
+					//echo "$requestUrl failed: " . $reason->getMessage() . "\n";
 
 					return $this->downloadNextFile();
 
@@ -2303,7 +2303,7 @@ class MissingFileDownloadLane {
 
 					if( $sourceUrl = $nextFile->clientServerSourceUrls[$i] ) {
 
-						echo "attempting to download " . $sourceUrl . " to " . $nextFile->getTmpSavePath() . "\n";
+						//echo "attempting to download " . $sourceUrl . " to " . $nextFile->getTmpSavePath() . "\n";
 		
 						return $guzzleClient->requestAsync('GET', $sourceUrl, [
 							'connect_timeout' => 1,
@@ -2316,7 +2316,7 @@ class MissingFileDownloadLane {
 		
 						}, function(Exception $e) use ($sourceUrl, $i, $downloadNextSourceUrl) {
 		
-							echo "direct download " . $sourceUrl . " failed: " . $e->getMessage() . "\n";
+							//echo "direct download " . $sourceUrl . " failed: " . $e->getMessage() . "\n";
 		
 							// If direct transcoding server download fails, attempt next download source
 							return $downloadNextSourceUrl($i + 1);
