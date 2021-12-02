@@ -1964,8 +1964,6 @@ class Cron {
 
 		if( $jobs = TranscodingJob::getSourceDownloadJobs() ) {
 
-			print_r($jobs);
-
 			$client = CDNClient::getB2Client();
 	
 			$downloader = new \dliebner\B2\ParallelDownloader($client, 10);
@@ -1984,6 +1982,11 @@ class Cron {
 			}
 
 			$downloader->doDownload();
+
+			print_r([
+				'downloaded' => $downloader->getAllDownloadedFiles(),
+				'failed' => $downloader->getAllFailedFiles()
+			]);
 
 			foreach( $downloader->getAllFailedFiles() as $failedFileOptions ) {
 
