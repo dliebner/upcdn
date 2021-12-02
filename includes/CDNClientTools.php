@@ -1445,7 +1445,7 @@ class TranscodingJob {
 			// Create missing path directories
 			if( !file_exists($dirName) && !mkdir_recursive($dirName, 0775)) {
 				
-				throw new Exception("Could not create $dirName dir.");
+				throw new Exception("Could not create dir: $dirName");
 				
 			}
 
@@ -2231,7 +2231,7 @@ class MissingFileDownloadLane {
 
 			// Create directory if necessary
 			$dirname = dirname($nextFile->localSavePath);
-			if( !file_exists($dirname) ) mkdir_recursive($dirname);
+			if( !file_exists($dirname)  && !mkdir_recursive($dirname) ) throw new Exception("Unable to create dir: $dirname");
 
 			if( $nextFile->clientServerSourceUrls ) {
 
