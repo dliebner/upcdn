@@ -2184,10 +2184,34 @@ class MissingFileDownloadLane {
 
 					if( $zip->open($zipFile) ) {
 
-						$zip->extractTo( dirname($zipFile) );
+						if( !$zip->extractTo( dirname($zipFile) ) ) {
+
+							Logger::logEvent("unzip failed", [
+								'email' => true,
+								'data' => [
+									'$root_path' => $GLOBALS['root_path'],
+									'__DIR__' => __DIR__,
+									'dirname($zipFile)' => dirname($zipFile),
+									'file' => $nextFile,
+								]
+							]);
+
+						}
+
 						$zip->close();
 
 						//echo $zipFile . " unzipped\n";
+
+					} else {
+
+						Logger::logEvent("zip open failed", [
+							'email' => true,
+							'data' => [
+								'$root_path' => $GLOBALS['root_path'],
+								'__DIR__' => __DIR__,
+								'file' => $nextFile,
+							]
+						]);
 
 					}
 
