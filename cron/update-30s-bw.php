@@ -19,10 +19,12 @@ while( time() - 60 < $start ) {
 
 	$bytes30s = (int)$redis->get('bgcdn:bw_30sec_exp_' . (time() + 1));
 
-	ServerStatus::setMulti([
+	ServerStatus::setMulti($updates = [
 		'avg_bytes_per_sec_30s' => round($bytes30s / 30),
 		'port_saturation_pct' => round($bytes30s * 8 / 30 / CDNTools::getPortSpeedBits(), 4),
 	]);
+
+	print_r($updates);
 
 	$timeElapsed = stop_timer('update30sBw');
 	$waitSeconds = max(0, 1 - $timeElapsed);
