@@ -10,13 +10,13 @@ if( !defined('IN_SCRIPT') ) die('Hacking attempt');
 " | sudo tee ../local/constants.php > /dev/null
 
 # chmod dirs
-chmod 0777 ../v ../logs ../transcoding
+chmod 0777 ../www/v ../logs ../transcoding
 
 # chmod files
 chmod +x *.sh
 chmod +x ../scripts/*
 chmod +x ../daemon/*
-chmod +x ../cron/*.sh
+#chmod +x ../cron/*.sh
 chmod +x ../devel/cpp-redis-pipe/*.sh
 
 # webmin repo + key
@@ -52,7 +52,8 @@ echo
 # Set mysql root credentials for root user
 echo "[client]
 user = \"root\"
-password = \"${BGCDN_MYSQL_ROOT_PASS}\"" | sudo tee /root/my.cnf > /dev/null
+password = \"${BGCDN_MYSQL_ROOT_PASS}\"" | sudo tee /root/.my.cnf > /dev/null
+sudo chmod 0600 /root/.my.cnf
 
 # Set hostname
 sudo hostnamectl set-hostname "${BGCDN_HOSTNAME}"
@@ -67,6 +68,7 @@ echo "+-----------------------------+"
 
 # secure MySQL installation
 sudo mysql_secure_installation
+sleep 1
 
 # add bgcdn mysql user
 MYSQL_BGCDN_USER="bgcdn_user"
@@ -112,6 +114,32 @@ sed -i '/<Directory \/usr\/share\/phpmyadmin>/a\
     RewriteRule ^/?(.*) https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]\
 ' /etc/phpmyadmin/apache.conf
 
+# copy apache files
+sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sudo cp bgcdn-apache-ssl.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}-ssl.conf
+sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
+
+# replace occurences of BGCDN_HOSTNAME in copied conf files
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}-ssl.conf
+
+# soft link
+sudo ln -rs /etc/apache2/sites-available/${BGCDN_HOSTNAME}* /etc/apache2/sites-enabled/
+sudo ln -rs /etc/apache2/conf-available/bgcdn* /etc/apache2/conf-enabled/
+
+# replace occurences of BGCDN_HOSTNAME in source files
+sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" ../devel/cpp-redis-pipe/redis-pipe.cc
+
+# build stuff
+cd /home/bgcdn/devel/cpp-redis-pipe/
+./build.sh
+cd /home/bgcdn/install
+
+# copy files
+sudo cp ../devel/cpp-redis-pipe/redis-pipe ../scripts/
+
+sudo service apache2 restart
+
 # install SSL certificate
 sudo certbot --apache
 sleep 1
@@ -141,6 +169,9 @@ sudo usermod -a -G www-data bgcdn
 # install composer
 ./install-composer.sh
 
+# chown files
+chown -R bgcdn:bgcdn /home/bgcdn
+
 # install composer extensions
 cd /home/bgcdn
 su bgcdn -c "composer require gabrielelana/byte-units guzzlehttp/guzzle:^7"
@@ -150,34 +181,12 @@ su bgcdn -c "composer config repositories.backblaze-b2 vcs https://github.com/dl
 su bgcdn -c "composer require dliebner/backblaze-b2:dev-master"
 cd /home/bgcdn/install
 
-# replace occurences of BGCDN_HOSTNAME in source files
-sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" ../devel/cpp-redis-pipe/redis-pipe.cc
-
-# build stuff
-cd /home/bgcdn/devel/cpp-redis-pipe/
-./build.sh
-cd /home/bgcdn/install
-
 # copy files
-sudo cp bgcdn-apache.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
-sudo cp bgcdn-apache-ssl.conf /etc/apache2/sites-available/${BGCDN_HOSTNAME}-ssl.conf
-sudo cp ../devel/cpp-redis-pipe/redis-pipe ../scripts/
-sudo cp bgcdn-bw-redis-pipe.conf /etc/apache2/conf-available/
 sudo cp bgcdn-sudoers /etc/sudoers.d/
 sudo cp bgcdn-cron /etc/cron.d/
 sudo cp bgcdn-docker-events.service /etc/systemd/system/
 
-# replace occurences of BGCDN_HOSTNAME in copied conf files
-sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}.conf
-sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /etc/apache2/sites-available/${BGCDN_HOSTNAME}-ssl.conf
-# replace occurences of BGCDN_HOSTNAME in copied scripts
-sed -i "s/\$BGCDN_HOSTNAME/$BGCDN_HOSTNAME/" /home/bgcdn/scripts/redis-pipe.sh
-
-# soft link
-sudo ln -rs /etc/apache2/sites-available/${BGCDN_HOSTNAME}* /etc/apache2/sites-enabled/
-sudo ln -rs /etc/apache2/conf-available/bgcdn* /etc/apache2/conf-enabled/
-
-# chown files
+# chown files again
 chown -R bgcdn:bgcdn /home/bgcdn/
 
 # restart apache
