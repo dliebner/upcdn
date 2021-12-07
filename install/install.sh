@@ -93,8 +93,11 @@ sudo service mysql restart
 # install postfix + dovecot
 # ./install-postfix-dovecot.sh -p "${BGCDN_MYSQL_ROOT_PASS}" -d "${BGCDN_HOSTNAME}" -b "${MYSQL_BGCDN_PW}"
 
+# ufw rules
 sudo ufw allow 'Apache Full'
 sudo ufw allow 10000
+
+echo "y" | sudo ufw enable
 
 sudo a2enmod rewrite proxy_fcgi setenvif expires headers
 sudo a2enconf php7.4-fpm
