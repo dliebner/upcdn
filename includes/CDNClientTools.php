@@ -1265,6 +1265,8 @@ class TranscodingJob {
 
 	public static function setCloudDownloadSrcInProgress(array $jobs, $inProgress = true) {
 
+		echo "set " . count($jobs) . "\n";
+
 		if( !$jobs ) return;
 
 		$sql = "UPDATE transcoding_jobs
@@ -1277,6 +1279,8 @@ class TranscodingJob {
 
 				}, $jobs)
 			) . ")";
+
+		echo $sql . "\n";
 
 		if( !db()->sql_query($sql) ) throw new QueryException("Error updating transcoding_jobs", $sql);
 
