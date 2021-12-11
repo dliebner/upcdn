@@ -94,6 +94,7 @@ sudo service mysql restart
 # ./install-postfix-dovecot.sh -p "${BGCDN_MYSQL_ROOT_PASS}" -d "${BGCDN_HOSTNAME}" -b "${MYSQL_BGCDN_PW}"
 
 # ufw rules
+sudo ufw allow ssh
 sudo ufw allow 'Apache Full'
 sudo ufw allow 10000
 
