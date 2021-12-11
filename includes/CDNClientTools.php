@@ -1278,8 +1278,6 @@ class TranscodingJob {
 				}, $jobs)
 			) . ")";
 
-		echo $sql;
-
 		if( !db()->sql_query($sql) ) throw new QueryException("Error updating transcoding_jobs", $sql);
 
 	}
