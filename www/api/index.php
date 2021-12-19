@@ -177,6 +177,16 @@ switch( $payload->action ) {
 
 		break;
 
+	case CDNClient::CLIENT_ACTION_GIT_PULL:
+
+		$result = CDNClient::gitPull();
+
+		AjaxResponse::returnSuccess([
+			'pullSuccess' => $result
+		]);
+
+		break;
+
 	case CDNClient::CLIENT_ACTION_SYNC_CLIENT_DATA:
 
 		AjaxResponse::returnSuccess([
@@ -283,6 +293,22 @@ switch( $payload->action ) {
 		$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
 
 		CDNClient::downloadVideoVersions($downloadVersions);
+
+		AjaxResponse::returnSuccess();
+
+		break;
+
+	case CDNClient::CLIENT_ACTION_DELETE_VIDEO_VERSIONS:
+
+		if( !$deleteVersions = $params->deleteVersions ) AjaxResponse::criticalDie("Missing deleteVersions");
+
+		$deleteVersions = CDNTools::objectToArrayRecursive($deleteVersions);
+
+		foreach( $deleteVersions as $version ) {
+
+			CDNClient::deleteVideoVersion($version['versionFilename'], $version['type']);
+
+		}
 
 		AjaxResponse::returnSuccess();
 

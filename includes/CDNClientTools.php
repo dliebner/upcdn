@@ -27,9 +27,24 @@ class CDNClient {
 
 	const CLIENT_ACTION_INIT_SERVER = 'initServer';
 	const CLIENT_ACTION_VALIDATE_SECRET_KEY = 'validateSecretKey';
+	const CLIENT_ACTION_GIT_PULL = 'gitPull';
 	const CLIENT_ACTION_SYNC_CLIENT_DATA = 'syncClientData';
 	const CLIENT_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
 	const CLIENT_ACTION_DOWNLOAD_VIDEO_VERSIONS = 'downloadVideoVersions';
+	const CLIENT_ACTION_DELETE_VIDEO_VERSIONS = 'deleteVideoVersions';
+
+	public static function gitPull(&$execOutput = null) {
+
+		$cmd = escapeshellcmd(
+			"sudo /home/bgcdn/scripts/git-pull.sh"
+		);
+
+		$execOutput = null;
+		exec($cmd, $execOutput, $execResult);
+
+		return $execResult === 0;
+
+	}
 
 	public static function postToHub( $action, $params = array(), $options = array() ) {
 
@@ -301,6 +316,16 @@ class CDNClient {
 		}
 
 		$missingFileDownloader->doDownload();
+
+	}
+
+	public static function deleteVideoVersion($versionFilename, $versionType) {
+
+		if( !$versionFilename ) throw new Exception("Missing versionFilename");
+		if( !$versionType ) throw new Exception("Missing versionType");
+
+		$path = VideoPath::versionLocalPath($versionFilename, $versionType);
+		CDNTools::rrmdir($path);
 
 	}
 
@@ -961,6 +986,21 @@ class VideoPath {
 	public static function mp4LocalPath($versionFilename) {
 
 		return self::localWwwPath() . self::mp4UriPath($versionFilename);
+
+	}
+
+	public static function versionLocalPath($versionFilename, $versionType) {
+
+		switch( $versionType ) {
+
+			case 'mp4': return self::mp4LocalPath($versionFilename);
+			case 'hls': return self::hlsVideoFilesLocalFolder($versionFilename);
+
+			default:
+
+				throw new Exception("Unknown versionType: " . $versionType);
+
+		}
 
 	}
 

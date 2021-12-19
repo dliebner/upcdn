@@ -2,3 +2,4 @@
 www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/docker-ffprobe.sh
 www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/docker-ffmpeg.sh
 www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/docker-logs.sh
+www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/git-pull.sh
