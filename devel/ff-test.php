@@ -14,5 +14,6 @@ $videoStream = $ffProbeResult->videoStreams[0];
 
 print_r([
 	'displayWidth' => $videoStream->displayWidth(),
-	'displayHeight' => $videoStream->displayHeight()
+	'displayHeight' => $videoStream->displayHeight(),
+	'newDisplayWidth' => 2 * round($videoStream->height * $videoStream->sampleAspectRatioFloat / 2)
 ]);
