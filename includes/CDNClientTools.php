@@ -771,7 +771,9 @@ class FFProbeResult {
 	public $bitRate;
 	public $formats = [];
 
+	/** @var FFProbeResult_VideoStream[] $videoStreams */
 	public $videoStreams = [];
+	/** @var FFProbeResult_AudioStream[] $audioStreams */
 	public $audioStreams = [];
 
 	public function __construct($json) {
