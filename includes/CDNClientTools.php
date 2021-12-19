@@ -745,7 +745,7 @@ class FFProbeResult_VideoStream extends FFProbeResult_Stream {
 	public function displayWidth() {
 
 		// Rounds to the nearest even number
-		return 2 * round($this->width / $this->sampleAspectRatioFloat / 2);
+		return 2 * round($this->height * $this->sampleAspectRatioFloat / 2);
 
 	}
 
