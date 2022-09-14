@@ -50,9 +50,9 @@ class CDNClient {
 
 		global $root_path;
 
-		$serverId = Config::get('server_id') ?: $options['serverId'];
-		$secretKey = Config::get('secret_key') ?: $options['secretKey'];
-		$hubApiUrl = Config::get('hub_api_url') ?: $options['hubApiUrl'];
+		$serverId = $options['serverId'] ?: Config::get('server_id');
+		$secretKey = $options['secretKey'] ?: Config::get('secret_key');
+		$hubApiUrl = $options['hubApiUrl'] ?: Config::get('hub_api_url');
 
 		if( !$serverId ) throw new Exception('Server ID is not set.');
 		if( !$secretKey ) throw new Exception('Secret key is not set.');

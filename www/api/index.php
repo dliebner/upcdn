@@ -4,8 +4,6 @@ define('IN_SCRIPT', 1);
 
 $root_path = './../../';
 
-use dliebner\B2\Client;
-
 include_once( $root_path . 'common.php' );
 require_once( $root_path . 'includes/JSONEncrypt.php');
 
