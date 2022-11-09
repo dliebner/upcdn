@@ -32,6 +32,7 @@ class CDNClient {
 	const CLIENT_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
 	const CLIENT_ACTION_DOWNLOAD_VIDEO_VERSIONS = 'downloadVideoVersions';
 	const CLIENT_ACTION_DELETE_VIDEO_VERSIONS = 'deleteVideoVersions';
+	const CLIENT_ACTION_GET_VIDEO_INFO_FROM_URL = 'getVideoInfoFromUrl';
 
 	public static function gitPull(&$execOutput = null) {
 
@@ -578,6 +579,37 @@ class CDNTools {
 		}
 
 		return true;
+
+	}
+
+	public static function getStreamPath( $fp ) {
+
+		return stream_get_meta_data($fp)['uri'];
+
+	}
+
+	/** Returns temp file handle */
+	public static function downloadTemporaryFile($url) {
+	
+		// Create temp file to write to
+		$fp_tmp = tmpfile();
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_FILE, $fp_tmp);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_HEADER, false);
+
+		$result = curl_exec($ch);
+		$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+		curl_close($ch);
+
+		if( $result && $httpcode == '200' ) {
+
+			return $fp_tmp;
+
+		}
 
 	}
 	

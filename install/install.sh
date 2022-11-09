@@ -42,7 +42,7 @@ sudo apt update && sudo apt install docker-ce docker-ce-cli containerd.io
 docker pull dliebner/ffmpeg-entrydefault
 
 # install LAMP
-sudo apt install apache2 php7.4 php-cli php-dev libapache2-mod-fcgid php-fpm htop php-zip php-gd php-mbstring php-curl php-xml php-pear php-bcmath php-json php-common certbot python3-certbot-apache
+sudo apt install apache2 php7.4 php-cli php-dev libapache2-mod-fcgid php-fpm htop php-zip php-gd php-mbstring php-curl php-xml php-pear php-bcmath php-json php-gmp php-common certbot python3-certbot-apache
 
 # Collect installation details
 read -p "CDN server hostname: " BGCDN_HOSTNAME

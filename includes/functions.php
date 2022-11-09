@@ -448,7 +448,7 @@ class GeneralExceptionWithData extends Exception {
 
 		$this->data = $data;
 		
-		parent::__construct($message, 0, null);
+		parent::__construct($message, 0);
 		
 	}
 

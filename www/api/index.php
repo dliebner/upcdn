@@ -193,6 +193,82 @@ switch( $payload->action ) {
 
 		break;
 
+	case CDNClient::CLIENT_ACTION_GET_VIDEO_INFO_FROM_URL:
+
+		if( !$videoUrl = $params->url ) AjaxResponse::criticalDie("Missing url");
+
+		$options = $params->options ?: (object)[
+			'dctHash' => false,
+			'md5' => false,
+		];
+
+		$videoInfo = [];
+
+		// Download video as temporary file
+		if( !$fp_tmp = CDNTools::downloadTemporaryFile( $videoUrl ) ) {
+
+			AjaxResponse::returnError("Error downloading: $videoUrl");
+
+		}
+
+		$tmpFile = CDNTools::getStreamPath($fp_tmp);
+
+		// Probe the file
+		if( !$probeResult = FFProbe::dockerProxyProbe($tmpFile, $execResult, $execOutput, $ffprobeResultRaw) ) {
+
+			AjaxResponse::returnError("Error probing video file", debugEnabled() ? [
+				'cmd' => $cmd,
+				'execResult' => $execResult,
+				'execOutput' => $execOutput,
+				'ffprobeResultRaw' => $ffprobeResultRaw
+			] : null);
+			
+		}
+
+		if( !$videoStream = $probeResult->videoStreams[0] ) {
+
+			AjaxResponse::returnError("Invalid video file.");
+
+		}
+
+		if( $options->md5 ) {
+
+			$videoInfo['md5'] = md5_file($tmpFile);
+
+		}
+
+		if( $options->dctHash && ($getVideoDCTHashPath = './' . $root_path . 'utils/getVideoDCTHash') && file_exists($getVideoDCTHashPath) ) {
+
+			$cmd = $getVideoDCTHashPath . ' ' . escapeshellarg($tmpFile);
+
+			$result = exec( escapeshellcmd($cmd) );
+	
+			if( $result && is_numeric($result) ) {
+				
+				$videoInfo['dctHash'] = gmp_convert($result, 10, 36);
+				
+			} else {
+		
+				$videoInfo['dctHashFail'] = $cmd . "\n" . $result;
+		
+			}
+
+		}
+
+		// Close the temporary file stream
+		fclose($fp_tmp);
+
+		AjaxResponse::returnSuccess([
+			'videoInfo' => array_merge($videoInfo, [
+				'duration' => $probeResult->duration,
+				'hasAudio' => $probeResult->hasAudio(),
+				'width' => $videoStream->displayWidth(),
+				'height' => $videoStream->displayHeight(),
+			])
+		]);
+
+		break;
+
 	case CDNClient::CLIENT_ACTION_CREATE_VIDEO_VERSION:
 
 		if( !$multi = $params->multi ) {
