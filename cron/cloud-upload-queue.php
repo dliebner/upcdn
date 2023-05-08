@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '/home/bgcdn/';
+$root_path = '/home/dtcdn/';
 
 require($root_path . 'common.php');
 
@@ -64,8 +64,8 @@ while( time() - $maxWaitTime < $start ) {
 				$srcCloudUploads[] = $job;
 
 				$pup->addFileToUpload($file = [
-					'bgcdn:jobId' => $job->id,
-					'bgcdn:type' => 'src',
+					'dtcdn:jobId' => $job->id,
+					'dtcdn:type' => 'src',
 					'FileName' => $job->getSrcCloudPath(),
 					'LocalFile' => $job->inProgressPath()
 				]);
@@ -91,8 +91,8 @@ while( time() - $maxWaitTime < $start ) {
 				}
 
 				$pup->addFileToUpload($file = [
-					'bgcdn:jobId' => $job->id,
-					'bgcdn:type' => 'version',
+					'dtcdn:jobId' => $job->id,
+					'dtcdn:type' => 'version',
 					'FileName' => $job->getVersionCloudPath(),
 					'LocalFile' => $localFile
 				]);
@@ -115,8 +115,8 @@ while( time() - $maxWaitTime < $start ) {
 
 			foreach( $uploadedFiles as $uploadedFileResult ) {
 
-				$type = $uploadedFileResult->originalFile['bgcdn:type'];
-				$jobId = $uploadedFileResult->originalFile['bgcdn:jobId'];
+				$type = $uploadedFileResult->originalFile['dtcdn:type'];
+				$jobId = $uploadedFileResult->originalFile['dtcdn:jobId'];
 
 				if( $type === 'src' ) $finishedSrcCloudUploadJobIds[] = $jobId;
 				if( $type === 'version' ) $finishedCloudUploadJobIds[] = $jobId;
@@ -135,8 +135,8 @@ while( time() - $maxWaitTime < $start ) {
 
 			foreach( $uploadedFiles as $uploadedFileResult ) {
 
-				$type = $uploadedFileResult->originalFile['bgcdn:type'];
-				$jobId = $uploadedFileResult->originalFile['bgcdn:jobId'];
+				$type = $uploadedFileResult->originalFile['dtcdn:type'];
+				$jobId = $uploadedFileResult->originalFile['dtcdn:jobId'];
 
 				if( $type === 'src' ) $failedSrcCloudUploadJobIds[] = $jobId;
 				if( $type === 'version' ) $failedCloudUploadJobIds[] = $jobId;

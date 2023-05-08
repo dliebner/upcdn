@@ -11,9 +11,9 @@ done
 
 # static vars
 database="email_server"      # name database email
-dbUser="bgcdn_user"             # user database email
+dbUser="dtcdn_user"             # user database email
 
-Email="bgcdn@${Domain}"    # Email with your domain
+Email="dtcdn@${Domain}"    # Email with your domain
 
 read -sp "Choose a password for $Email: " EmailPass
 echo

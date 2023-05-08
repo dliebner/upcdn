@@ -27,7 +27,7 @@ class Email {
 
 		if( empty($from) ) {
 
-			$this->from = 'BGCDN <bgcdn-noreply@' . Config::get('hostname') . '>';
+			$this->from = 'DTCDN <dtcdn-noreply@' . Config::get('hostname') . '>';
 
 		} else {
 
@@ -80,7 +80,7 @@ class Email {
 
 -------------------------------
 Thanks,
-BGCDN';
+DTCDN';
 
 		}
 

@@ -2,10 +2,10 @@
 
 # TODO: This script should be replaced by a C++ program for increased performance
 
-# GlobalLog "|/home/bgcdn/scripts/redis-pipe.sh" "%{end:sec}t %O %>s %v %U%q"
+# GlobalLog "|/home/dtcdn/scripts/redis-pipe.sh" "%{end:sec}t %O %>s %v %U%q"
 # ts, bytes, status, domain, URL
 
-BGCDN_HOSTNAME=$BGCDN_HOSTNAME
+DTCDN_HOSTNAME=$DTCDN_HOSTNAME
 
 while read logline; do
 
@@ -16,7 +16,7 @@ while read logline; do
 	domain=${parts[3]}
 
 	# Cumulative chunk bandwidth
-	redis-cli INCRBY bgcdn:bw_chunk ${bytes}
+	redis-cli INCRBY dtcdn:bw_chunk ${bytes}
 
 	# Rolling 30s bandwidth
 	start=$((${ts} - 29))
@@ -25,16 +25,16 @@ while read logline; do
 	do
 
 		expires=$((${i} + 30))
-		redis-cli INCRBY bgcdn:bw_30sec_exp_${expires} ${bytes}
-		redis-cli EXPIREAT bgcdn:bw_30sec_exp_${expires} ${expires}
+		redis-cli INCRBY dtcdn:bw_30sec_exp_${expires} ${bytes}
+		redis-cli EXPIREAT dtcdn:bw_30sec_exp_${expires} ${expires}
 
 	done
 
 	# 404s
-	if [ "${status}" == "404" ] && [ "$domain" == "${BGCDN_HOSTNAME}" ]; then
+	if [ "${status}" == "404" ] && [ "$domain" == "${DTCDN_HOSTNAME}" ]; then
 
 		uri=${parts[4]}
-		redis-cli HSETNX bgcdn:404_uris "$uri" 1
+		redis-cli HSETNX dtcdn:404_uris "$uri" 1
 
 	fi
 

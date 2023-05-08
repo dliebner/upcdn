@@ -1,21 +1,21 @@
 
 # Updates 30s bandwidth from Redis
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/update-30s-bw.php
+* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/update-30s-bw.php
 
 # Maintains running total of bandwidth
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/add-bw-chunk.php
+* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/add-bw-chunk.php
 
 # Cloud uploads
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/cloud-upload-queue.php
+* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/cloud-upload-queue.php
 
 # Second cron
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/second.php
+* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/second.php
 
 # Minute cron
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/minute.php
+* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/minute.php
 
 # Figures out what files we need to retrieve
-* * * * * bgcdn /usr/bin/php7.4 /home/bgcdn/cron/handle-404s.php
+* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/handle-404s.php
 
 # Prune old stopped docker containers (timestamp is relative to when container was started)
-11 * * * * bgcdn docker container prune --filter "until=48h" -f
+11 * * * * dtcdn docker container prune --filter "until=48h" -f

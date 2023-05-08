@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '/home/bgcdn/';
+$root_path = '/home/dtcdn/';
 
 // Script runs once per minute, we sleep to avoid lots of on-the-minute processing
 sleep(5);

@@ -1,5 +1,5 @@
-# Allows Apache and bgcdn user to run these scripts as sudo (i.e. as a way to proxy limited commands to docker)
-www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/docker-ffprobe.sh
-www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/docker-ffmpeg.sh
-www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/docker-logs.sh
-www-data, bgcdn ALL=NOPASSWD: /home/bgcdn/scripts/git-pull.sh
+# Allows Apache and dtcdn user to run these scripts as sudo (i.e. as a way to proxy limited commands to docker)
+www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/docker-ffprobe.sh
+www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/docker-ffmpeg.sh
+www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/docker-logs.sh
+www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/git-pull.sh

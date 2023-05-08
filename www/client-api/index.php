@@ -389,7 +389,7 @@ switch( $action ) {
 				// Can't move uploaded file twice; save job the moved it first, then copy
 				if( !$movedUploadedFile ) {
 
-					// Move file to in-progress folder (/home/bgcdn/transcoding)
+					// Move file to in-progress folder (/home/dtcdn/transcoding)
 					if( !$tcJob->moveUploadedFile($tmpFile) ) {
 
 						AjaxResponse::returnError("Error preparing transcoding job.");

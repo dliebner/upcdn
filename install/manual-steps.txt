@@ -46,7 +46,7 @@ service apache2 restart
 
 
 #
-# Set bgcdn_main.config variables
+# Set dtcdn_main.config variables
 #
 
 monthly_bandwidth_alloc		X TB

@@ -70,14 +70,14 @@ int main() {
             static const cpp_redis::reply_callback_t cb = [&](auto &&reply) noexcept
                { if (!ignore_cb_err && reply.is_error()) std::fprintf(stderr, "Redis error: %s\n", reply.error().c_str()); };
             // make redis requests
-            client.incrby("bgcdn:bw_chunk", bytes, cb); // Cumulative chunk bandwidth
+            client.incrby("dtcdn:bw_chunk", bytes, cb); // Cumulative chunk bandwidth
             for (int expires = ts + 1; expires <= ts + 30; ++expires) { // Rolling 30s bandwidth
-               char buf[sizeof "bgcdn:bw_30sec_exp_+2147483648"];
-               const std::string key = (std::sprintf(buf, "bgcdn:bw_30sec_exp_%d", expires), buf);
+               char buf[sizeof "dtcdn:bw_30sec_exp_+2147483648"];
+               const std::string key = (std::sprintf(buf, "dtcdn:bw_30sec_exp_%d", expires), buf);
                client.incrby(key, bytes, cb).expireat(key, expires, cb);
             }
-            if( status == 404 && domain == "$BGCDN_HOSTNAME" ) {
-               client.hsetnx("bgcdn:404_uris", uri, "1");
+            if( status == 404 && domain == "$DTCDN_HOSTNAME" ) {
+               client.hsetnx("dtcdn:404_uris", uri, "1");
             }
             // commit requests
             # if REDIS_PIPE_ASYNC_COMMIT

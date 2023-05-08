@@ -1,8 +1,8 @@
 [Unit]
-Description=BGCDN Docker Event handler
+Description=DTCDN Docker Event handler
 
 [Service]
-ExecStart=/home/bgcdn/daemon/docker-events.sh
+ExecStart=/home/dtcdn/daemon/docker-events.sh
 Restart=on-failure
 
 [Install]
