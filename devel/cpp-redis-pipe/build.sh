@@ -6,11 +6,8 @@ rm -rf cpp_redis lib; mkdir lib
 
 (  git clone https://github.com/cpp-redis/cpp_redis
    cd cpp_redis
+   git checkout fc2c43fa07e45e1ef0f77cbda6a240e7890ae5aa
    git submodule init; git submodule update
-   cd tacopie
-   git fetch origin pull/5/head:cmake-fixes
-   git checkout cmake-fixes
-   cd ..
    mkdir build; cd build
    cmake .. -D{CMAKE_BUILD_TYPE=Release,CMAKE_INSTALL_PREFIX=../../lib}
    make
