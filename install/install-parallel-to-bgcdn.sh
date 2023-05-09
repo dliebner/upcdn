@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# return the value of the last (rightmost) command to exit with a non-zero status,
-#   or zero if all commands exit successfully
-set -o pipefail
+# -e: Exit immediately if any command exits with a non-zero status
+# -x: Print each command before it's executed
+set -ex
 
 # init local files
 mkdir -p ../local
