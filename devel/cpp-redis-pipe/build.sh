@@ -17,4 +17,4 @@ rm -rf cpp_redis lib; mkdir lib
    make install
 )
 
-g++ -{std=c++17,pthread} -{O3,s} -o redis-pipe{,.cc} -Ilib/include -Llib/lib -l{cpp_redis,tacopie}
+g++ -{std=c++17,pthread} -{O3,s} -o redis-pipe{,.cc} -Ilib/include -Llib/lib -Wl,-rpath=$PWD/lib/lib -l{cpp_redis,tacopie}
