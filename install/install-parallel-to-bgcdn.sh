@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# return the value of the last (rightmost) command to exit with a non-zero status,
+#   or zero if all commands exit successfully
+set -o pipefail
+
 # init local files
 mkdir -p ../local
 mkdir -p ../logs
