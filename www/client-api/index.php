@@ -262,7 +262,7 @@ switch( $action ) {
 	
 			$returnMeta = [];
 	
-			if( !CDNClient::validateCdnToken($cdnToken, 'upload-video', ['sourceWidth' => $sourceWidth, 'sourceHeight' => $sourceHeight], $responseData, $_SERVER['REMOTE_ADDR'], $userId) ) {
+			if( !CDNClient::validateCdnToken($cdnToken, 'upload-video', ['sourceWidth' => $sourceWidth, 'sourceHeight' => $sourceHeight, 'sourceDuration' => $duration], $responseData, $_SERVER['REMOTE_ADDR'], $userId) ) {
 	
 				AjaxResponse::returnError("Invalid upload token.");
 	
