@@ -59,8 +59,9 @@ while( time() - 60 < $start ) {
 			$basePattern = '@^/' . preg_quote(CDNClient::DIR_VIDEO, '@');
 			$endQuote = '@';
 
-			$mp4Pattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)\.mp4)$' . $endQuote;
-			$hlsPattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)x(\d+)(_na)?)/index\.m3u8)$' . $endQuote;
+			$mp4Pattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)(?:x(\d+))?(h)?(_na)?)\.mp4)$' . $endQuote;
+			$hlsPattern = $basePattern . '[\w/]+/((([^.]+)_(\d+)(?:x(\d+))?(h)?(_na)?)/index\.m3u8)$' . $endQuote;
+			$posterPattern = $basePattern . '[\w/]+/(([^.]+)_poster_(\d+)\.jpg)$' . $endQuote;
 
 			if( preg_match($mp4Pattern, $path, $matches) ) {
 
@@ -70,7 +71,8 @@ while( time() - 60 < $start ) {
 				$srcFilename = $matches[3];
 				$width = $matches[4];
 				$height = $matches[5];
-				$hasAudio = !$matches[6];
+				$heightFlag = $matches[6];
+				$hasAudio = !$matches[7];
 
 				if( !file_exists(VideoPath::mp4LocalPath($versionFilename)) ) {
 	
@@ -86,12 +88,26 @@ while( time() - 60 < $start ) {
 				$srcFilename = $matches[3];
 				$width = $matches[4];
 				$height = $matches[5];
-				$hasAudio = !$matches[6];
+				$heightFlag = $matches[6];
+				$hasAudio = !$matches[7];
 
 				if( !file_exists(VideoPath::hlsIndexLocalPath($versionFilename)) ) {
 	
 					$missingTailpaths[] = $tailPath;
 	
+				}
+
+			} else if( preg_match($posterPattern, $path, $matches) ) {
+
+				$type = 'poster';
+				$tailPath = $matches[1];
+				$srcFilename = $matches[2];
+				$posterFrameIndex = $matches[3];
+
+				if( !file_exists(VideoPath::posterLocalPath($srcFilename, $posterFrameIndex)) ) {
+
+					$missingTailpaths[] = $tailPath;
+
 				}
 
 			}
@@ -112,9 +128,23 @@ while( time() - 60 < $start ) {
 
 					if( $downloadVersions = $responseData['downloadVersions'] ) {
 
-						print_r($downloadVersions);
+						print_r(['downloadVersions' => $downloadVersions]);
 
-						CDNClient::downloadVideoVersions($downloadVersions, $missingFileDownloader);
+						CDNClient::prepareDownloadVideoVersions($downloadVersions, $missingFileDownloader);
+
+					}
+
+					if( $downloadPosters = $responseData['downloadPosters'] ) {
+
+						print_r(['downloadPosters' => $downloadPosters]);
+
+						CDNClient::prepareDownloadPosters($downloadPosters, $missingFileDownloader);
+
+					}
+
+					if( $missingFileDownloader ) {
+
+						$missingFileDownloader->doDownload();
 
 						print_r([
 							'downloadedFiles' => $missingFileDownloader->getAllDownloadedFiles(),

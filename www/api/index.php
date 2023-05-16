@@ -297,6 +297,13 @@ switch( $payload->action ) {
 			if( !isset($multiParams->mute) ) AjaxResponse::criticalDie("Missing mute");
 			$mute = $multiParams->mute;
 
+			// Optional poster params
+			$savePoster = $multiParams->savePoster;
+			$posterFrameIndex = $multiParams->posterFrameIndex;
+			$posterJpegQuality = $multiParams->posterJpegQuality;
+			$posterConstrainWidth = $multiParams->posterConstrainWidth;
+			$posterConstrainHeight = $multiParams->posterConstrainHeight;
+
 			if( !$probeResult = new FFProbeResult($sourceFfprobeJson) ) AjaxResponse::criticalDie("Error reading source ffprobe json");
 
 			CDNTools::getEncodingSettings(
@@ -312,7 +319,12 @@ switch( $payload->action ) {
 				$passThroughVideo,
 				$saveAsHls,
 				null,
-				$mute
+				$mute,
+				$savePoster,
+				$posterFrameIndex,
+				$posterJpegQuality,
+				$posterConstrainWidth,
+				$posterConstrainHeight
 			));
 
 			if( !$tcJob->sourceVideoExistsOnDisk() ) {
@@ -365,8 +377,16 @@ switch( $payload->action ) {
 		if( !$downloadVersions = $params->downloadVersions ) AjaxResponse::criticalDie("Missing downloadVersions");
 
 		$downloadVersions = CDNTools::objectToArrayRecursive($downloadVersions);
+		CDNClient::prepareDownloadVideoVersions($downloadVersions, $missingFileDownloader);
 
-		CDNClient::downloadVideoVersions($downloadVersions);
+		if( $downloadPosters = $params->downloadPosters ) {
+
+			$downloadPosters = CDNTools::objectToArrayRecursive($downloadPosters);
+			CDNClient::prepareDownloadPosters($downloadPosters, $missingFileDownloader);
+
+		}
+
+		$missingFileDownloader->doDownload();
 
 		AjaxResponse::returnSuccess();
 

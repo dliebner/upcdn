@@ -282,6 +282,13 @@ switch( $action ) {
 			if( is_array($responseData['returnMeta']) ) $returnMeta = $responseData['returnMeta'] + $returnMeta;
 	
 			if( !$versions = $responseData['versions'] ) throw new GeneralExceptionWithData("Missing versions in validateCdnToken response.", $responseData);
+
+			// Optional poster params
+			$savePoster = $meta['savePoster'];
+			$posterFrameIndex = $meta['posterFrameIndex'];
+			$posterJpegQuality = $meta['posterJpegQuality'];
+			$posterConstrainWidth = $meta['posterConstrainWidth'];
+			$posterConstrainHeight = $meta['posterConstrainHeight'];
 	
 			// Get lowest maxDuration
 			$minMaxDuration = null;
@@ -383,7 +390,12 @@ switch( $action ) {
 					$passThroughVideo,
 					$saveAsHls,
 					null,
-					$mute
+					$mute,
+					$savePoster,
+					$posterFrameIndex,
+					$posterJpegQuality,
+					$posterConstrainWidth,
+					$posterConstrainHeight
 				));
 
 				// Can't move uploaded file twice; save job the moved it first, then copy

@@ -263,11 +263,11 @@ class CDNClient {
 	}
 
 	/** @param MissingFileDownloader $missingFileDownloader */
-	public static function downloadVideoVersions(array $downloadVersions, &$missingFileDownloader = null) {
+	public static function prepareDownloadVideoVersions(array $downloadVersions, &$missingFileDownloader = null) {
 
 		$guzzleClient = new \GuzzleHttp\Client();
 		$b2Client = self::getB2Client();
-		$missingFileDownloader = new MissingFileDownloader($guzzleClient, $b2Client, 10);
+		if( !$missingFileDownloader ) $missingFileDownloader = new MissingFileDownloader($guzzleClient, $b2Client, 10);
 
 		$clientServerSourceUrls = [];
 
@@ -316,7 +316,48 @@ class CDNClient {
 
 		}
 
-		$missingFileDownloader->doDownload();
+	}
+
+	/** @param MissingFileDownloader $missingFileDownloader */
+	public static function prepareDownloadPosters(array $downloadPosters, &$missingFileDownloader = null) {
+
+		$guzzleClient = new \GuzzleHttp\Client();
+		$b2Client = self::getB2Client();
+		if( !$missingFileDownloader ) $missingFileDownloader = new MissingFileDownloader($guzzleClient, $b2Client, 10);
+
+		$clientServerSourceUrls = [];
+
+		foreach( $downloadPosters as $posterDlInfo ) {
+
+			$srcFilename = $posterDlInfo['srcFilename'];
+			$posterFrameIndex = $posterDlInfo['posterFrameIndex'];
+
+			if( $hostnames = $posterDlInfo['clientServerSourceHostnames'] ) {
+
+				foreach($hostnames as $cdnHostname) {
+			
+					if( $cdnHostname !== Config::get('hostname') ) {
+
+						$urlBase = 'http://' . $cdnHostname . '/';
+
+						$clientServerSourceUrls[] = $urlBase . VideoPath::posterUriPath($srcFilename, $posterFrameIndex);
+
+					}
+
+				}
+
+			}
+
+			$missingFileDownloader->addFileToDownload(
+				new MissingFile(
+					VideoPath::posterLocalPath($srcFilename, $posterFrameIndex),
+					false,
+					VideoPath::getPosterCloudPath($srcFilename, $posterFrameIndex),
+					$clientServerSourceUrls
+				)
+			);
+
+		}
 
 	}
 
@@ -883,7 +924,26 @@ class TranscodingJobSettings implements JsonSerializable {
 	public $hlsSegmentTime;
 	public $mute;
 
-	public function __construct($bitRate = null, $constrainWidth = null, $constrainHeight = null, $passThroughVideo = null, $saveAsHls = null, $hlsSegmentTime = null, $mute = false) {
+	public $savePoster;
+	public $posterFrameIndex;
+	public $posterJpegQuality;
+	public $posterConstrainWidth;
+	public $posterConstrainHeight;
+
+	public function __construct(
+		$bitRate = null,
+		$constrainWidth = null,
+		$constrainHeight = null,
+		$passThroughVideo = null,
+		$saveAsHls = null,
+		$hlsSegmentTime = null,
+		$mute = false,
+		$savePoster = null,
+		$posterFrameIndex = 0,
+		$posterJpegQuality = 2,
+		$posterConstrainWidth = null,
+		$posterConstrainHeight = null
+	) {
 
 		$this->bitRate = (int)$bitRate;
 		$this->constrainWidth = (int)$constrainWidth ?: null;
@@ -892,6 +952,12 @@ class TranscodingJobSettings implements JsonSerializable {
 		$this->saveAsHls = $saveAsHls;
 		$this->hlsSegmentTime = $hlsSegmentTime;
 		$this->mute = $mute;
+
+		$this->savePoster = $savePoster;
+		$this->posterFrameIndex = $posterFrameIndex;
+		$this->posterJpegQuality = $posterJpegQuality;
+		$this->posterConstrainWidth = $posterConstrainWidth;
+		$this->posterConstrainHeight = $posterConstrainHeight;
 		
 	}
 
@@ -1021,6 +1087,18 @@ class VideoPath {
 
 	}
 
+	public static function posterUriPath($srcFilename, $posterFrameIndex) {
+
+		return self::videoUriBaseFolder($srcFilename) . $srcFilename . '_poster_' . $posterFrameIndex . '.jpg';
+
+	}
+
+	public static function posterLocalPath($srcFilename, $posterFrameIndex) {
+
+		return self::localWwwPath() . self::posterUriPath($srcFilename, $posterFrameIndex);
+
+	}
+
 	public static function versionLocalPath($versionFilename, $versionType) {
 
 		switch( $versionType ) {
@@ -1045,6 +1123,12 @@ class VideoPath {
 	public static function getVersionCloudPath($versionFilename, $versionType) {
 
 		return 'video_versions/' . self::getDirPrefix($versionFilename) . $versionFilename . ($versionType === 'hls' ? '.zip' : '.mp4');
+
+	}
+
+	public static function getPosterCloudPath($srcFilename, $posterFrameIndex) {
+
+		return 'video_src/' . self::getDirPrefix($srcFilename) . $srcFilename . '_poster_' . $posterFrameIndex . '.jpg';
 
 	}
 
@@ -1429,6 +1513,26 @@ class TranscodingJob {
 		if( $this->jobSettings->saveAsHls ) $escapedArgs[] = "-s";
 		if( $this->jobSettings->passThroughVideo ) $escapedArgs[] = "-p";
 		if( $this->jobSettings->mute ) $escapedArgs[] = "-m";
+
+		if( $this->jobSettings->savePoster ) {
+
+			// Frame capture args
+			$captureFrameIndex = $this->jobSettings->posterFrameIndex ?: 0;
+			$frameOutFile = CDNClient::DIR_TRANSCODE_OUTPUT . $this->srcFilename . "_poster_$captureFrameIndex.jpg";
+			$frameJpegQuality = $this->jobSettings->posterJpegQuality ?: 2;
+
+			if( !file_exists(VideoPath::posterLocalPath($this->srcFilename, $captureFrameIndex)) ) { // Don't re-capture frame if we already have it
+			
+				$escapedArgs[] = '-F ' . escapeshellarg($frameOutFile);
+				$escapedArgs[] = '-I ' . escapeshellarg($captureFrameIndex);
+				$escapedArgs[] = '-Q ' . escapeshellarg($frameJpegQuality);
+
+				if( $frameConstrainWidth = $this->jobSettings->posterConstrainWidth ) $escapedArgs[] = '-W ' . escapeshellarg($frameConstrainWidth);
+				if( $frameConstrainHeight = $this->jobSettings->posterConstrainHeight ) $escapedArgs[] = '-H ' . escapeshellarg($frameConstrainHeight);
+
+			}
+
+		}
 
 		$cmd = escapeshellcmd(
 			"sudo /home/dtcdn/scripts/docker-ffmpeg.sh " . implode(" ", $escapedArgs)

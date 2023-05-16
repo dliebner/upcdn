@@ -99,6 +99,29 @@ while( time() - $maxWaitTime < $start ) {
 
 				//print_r($file); echo "\n";
 
+				// Add any posters
+				$posterLocalWildcardPath = VideoPath::posterLocalPath($job->srcFilename, '*');
+
+				$files = new GlobIterator($posterLocalWildcardPath);
+				foreach( $files as $file ) {
+
+					if( preg_match('/^[^.]+_poster_(\d+)\.jpg$/', $file->getFilename(), $matches) )
+
+						$posterFrameIndex = $matches[1];
+
+						$pup->addFileToUpload($fileObj = [
+							'dtcdn:jobId' => $job->id,
+							'dtcdn:type' => 'poster',
+							'FileName' => VideoPath::getPosterCloudPath($job->srcFilename, $posterFrameIndex),
+							'LocalFile' => $file->getPathname()
+						]);
+
+						//print_r($fileObj); echo "\n";
+
+					}
+
+				}
+
 			}
 
 		}
