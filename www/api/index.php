@@ -359,6 +359,7 @@ switch( $payload->action ) {
 
 			} else {
 				
+				// TODO: if source is not in cloud, set a flag to tell client to re-upload the video file
 				$tcJob->queueSourceDownload();
 
 			}
