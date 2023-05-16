@@ -546,22 +546,8 @@ class CDNTools {
 		$passThroughVideo = $fileSizeBytes <= $maxSizeBytes && $videoStream->codecName === 'h264';
 
 		// Determine constraining width/height
-		$uploadedAspectRatio = $videoStream->displayAspectRatioFloat;
-		$targetAspectRatio = $targetWidth / $targetHeight;
-
-		if( $uploadedAspectRatio > $targetAspectRatio ) {
-
-			// Uploaded video is "wider" (proportionally) than the target dimensions
-			$constrainWidth = $targetWidth * 2; // 2x resolution
-			$constrainHeight = -2;
-
-		} else {
-
-			// Uploaded video is "taller" (proportionally) than the target dimensions
-			$constrainWidth = -2;
-			$constrainHeight = $targetHeight * 2; // 2x resolution
-
-		}
+		$constrainWidth = $targetWidth ?: null;
+		$constrainHeight = $targetHeight ?: null;
 		
 		if( $passThroughVideo && $fileSizeBytes < $hlsByteSizeThreshold ) {
 
@@ -1831,8 +1817,8 @@ class TranscodingJob {
 			" . (int)$srcSizeBytes . ",
 			'" . original_to_query($srcDuration) . "',
 			'" . original_to_query($versionFilename) . "',
-			" . (int)$versionWidth . ",
-			" . (int)$versionHeight . ",
+			" . ($versionWidth ? (int)$versionWidth : "NULL") . ",
+			" . ($versionHeight ? (int)$versionHeight : "NULL") . ",
 			'" . original_to_query(json_encode($jobSettings)) . "',
 			'" . original_to_query($progressToken) . "'
 		)";
