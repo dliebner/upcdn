@@ -289,8 +289,9 @@ switch( $payload->action ) {
 			if( !$maxSizeBytes = $multiParams->maxSizeBytes ) AjaxResponse::criticalDie("Missing maxSizeBytes");
 			if( !$duration = $multiParams->duration ) AjaxResponse::criticalDie("Missing duration");
 			if( !$versionFilename = $multiParams->versionFilename ) AjaxResponse::criticalDie("Missing versionFilename");
-			if( !$versionWidth = $multiParams->versionWidth ) AjaxResponse::criticalDie("Missing versionWidth");
-			if( !$versionHeight = $multiParams->versionHeight ) AjaxResponse::criticalDie("Missing versionHeight");
+			$versionWidth = $multiParams->versionWidth ?? null;
+			$versionHeight = $multiParams->versionHeight ?? null;
+			if( !$versionWidth && !$versionHeight ) AjaxResponse::criticalDie("Missing versionWidth and versionHeight");
 			if( !$targetBitRate = $multiParams->bitRate ) AjaxResponse::criticalDie("Missing bitRate");
 			if( !$hlsByteSizeThreshold = $multiParams->hlsByteSizeThreshold ) AjaxResponse::criticalDie("Missing hlsByteSizeThreshold");
 			if( !$sourceFfprobeJson = $multiParams->sourceFfprobeJson ) AjaxResponse::criticalDie("Missing sourceFfprobeJson");
