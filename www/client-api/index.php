@@ -116,6 +116,9 @@ if( CDNClient::corsOriginAllowed($origin) ) {
 
 }
 
+// End here for OPTIONS requests
+if( strtolower($_SERVER['REQUEST_METHOD']) === 'options' ) exit;
+
 $action = postdata_to_original($_POST['action']);
 
 switch( $action ) {
