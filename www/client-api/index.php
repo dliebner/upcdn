@@ -230,9 +230,9 @@ switch( $action ) {
 		*/
 
 		// Get uploaded file data
-		$originalFilename = $_FILES['image']['name'];
+		$originalFilename = $_FILES['file']['name'];
 		$originalExtension = pathinfo($originalFilename, PATHINFO_EXTENSION) ?: null;
-		$tmpFile = $_FILES['image']['tmp_name'];
+		$tmpFile = $_FILES['file']['tmp_name'];
 
 		if( !is_uploaded_file($tmpFile) ) {
 
