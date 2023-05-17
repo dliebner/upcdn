@@ -1151,8 +1151,8 @@ class TranscodingJob {
 		$this->srcSizeBytes = (int)$row['src_size_bytes'];
 		$this->srcDuration = (float)$row['src_duration'];
 		$this->versionFilename = $row['version_filename'];
-		$this->versionWidth = (int)$row['version_width'];
-		$this->versionHeight = (int)$row['version_height'];
+		$this->versionWidth = ($row['version_width'] ? (int)$row['version_width'] : null);
+		$this->versionHeight = ($row['version_height'] ? (int)$row['version_height'] : null);
 		$this->jobSettings = TranscodingJobSettings::fromJson($row['job_settings']);
 		$this->jobStarted = $row['job_started'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_started']) : null;
 		$this->jobFinished = $row['job_finished'] ? CDNTools::dateTimeFromMysqlDateTime($row['job_finished']) : null;
