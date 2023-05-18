@@ -105,7 +105,7 @@ while( time() - $maxWaitTime < $start ) {
 				$files = new GlobIterator($posterLocalWildcardPath);
 				foreach( $files as $file ) {
 
-					if( preg_match('/^[^.]+_poster_(\d+)\.jpg$/', $file->getFilename(), $matches) )
+					if( preg_match('/^[^.]+_poster_(\d+)\.jpg$/', $file->getFilename(), $matches) ) {
 
 						$posterFrameIndex = $matches[1];
 
