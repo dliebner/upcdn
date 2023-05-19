@@ -169,6 +169,12 @@ while( time() - $maxWaitTime < $start ) {
 			TranscodingJob::unsetSrcCloudUploadStarted($finishedSrcCloudUploadJobIds);
 			TranscodingJob::unsetCloudUploadStarted($finishedCloudUploadJobIds);
 
+			Logger::logEvent('b2_failed_upload', [
+				'data' => [
+					'failedFiles' => $failedFiles
+				]
+			]);
+
 			echo "Failed files:\n";
 			print_r($failedFiles);
 			echo "\n";
