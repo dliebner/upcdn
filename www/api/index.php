@@ -410,6 +410,22 @@ switch( $payload->action ) {
 
 		break;
 
+	case CDNClient::CLIENT_ACTION_DELETE_VIDEO_POSTERS:
+
+		if( !$deletePosters = $params->deletePosters ) AjaxResponse::criticalDie("Missing deletePosters");
+
+		$deletePosters = CDNTools::objectToArrayRecursive($deletePosters);
+
+		foreach( $deletePosters as $posterInfo ) {
+
+			CDNClient::deleteVideoPoster($posterInfo['srcFilename'], $posterInfo['posterFrameIndex']);
+
+		}
+
+		AjaxResponse::returnSuccess();
+
+		break;
+
 	default:
 
 		AjaxResponse::criticalDie('Invalid action: ' . $payload->action);

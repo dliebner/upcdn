@@ -32,6 +32,7 @@ class CDNClient {
 	const CLIENT_ACTION_CREATE_VIDEO_VERSION = 'createVideoVersion';
 	const CLIENT_ACTION_DOWNLOAD_VIDEO_VERSIONS = 'downloadVideoVersions';
 	const CLIENT_ACTION_DELETE_VIDEO_VERSIONS = 'deleteVideoVersions';
+	const CLIENT_ACTION_DELETE_VIDEO_POSTERS = 'deleteVideoPosters';
 	const CLIENT_ACTION_GET_VIDEO_INFO_FROM_URL = 'getVideoInfoFromUrl';
 
 	public static function gitPull(&$execOutput = null) {
@@ -358,6 +359,16 @@ class CDNClient {
 			);
 
 		}
+
+	}
+
+	public static function deleteVideoPoster($srcFilename, $posterFrameIndex) {
+
+		if( !$srcFilename ) throw new Exception("Missing srcFilename");
+		$posterFrameIndex = (int)$posterFrameIndex;
+
+		$path = VideoPath::posterLocalPath($srcFilename, $posterFrameIndex);
+		if( file_exists($path) ) unlink($path);
 
 	}
 
