@@ -37,7 +37,7 @@ fi
 encodeParams=()
 
 # Initialize video filters
-videoFilters=( "select='eq(n,0)+if(gt(t-prev_selected_t,1/30.50),1,0)'" )
+videoFilters=( -fpsmax 30 )
 
 # Check if constrainWidth and/or constrainHeight are provided
 if [ ! -z "$constrainWidth" ] && [ ! -z "$constrainHeight" ]; then
