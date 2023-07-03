@@ -37,7 +37,7 @@ fi
 encodeParams=()
 
 # Initialize video filters
-videoFilters=( -fpsmax 30 )
+videoFilters=()
 
 # Check if constrainWidth and/or constrainHeight are provided
 if [ ! -z "$constrainWidth" ] && [ ! -z "$constrainHeight" ]; then
@@ -56,6 +56,7 @@ if [ ! -z "$passthrough" ] && [ -z "$hlsOutput" ]; then # passthrough flag is se
 	encodeParams+=( -c:v:0 copy )
 else
 	# Encode video using h264 codec
+	encodeParams+=( -fpsmax:v:0 30 )
 	encodeParams+=( -c:v:0 h264 )
 	encodeParams+=( -b:v:0 "$bitRate" -preset medium )
 	encodeParams+=( -vf:0 $(IFS=, ; echo "${videoFilters[*]}") )
