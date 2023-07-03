@@ -37,12 +37,7 @@ fi
 encodeParams=()
 
 # Initialize video filters
-
-# Having issues with HLS segment durations with this
-# videoFilters=( "select='eq(n,0)+if(gt(t-prev_selected_t,1/30.50),1,0)'" )
-
-# Possibly fixed version?
-videoFilters=( "fps=fps='min(30,source_fps)'" )
+videoFilters=( "select='eq(n,0)+if(gt(t-prev_selected_t,1/30.50),1,0)'" )
 
 # Check if constrainWidth and/or constrainHeight are provided
 if [ ! -z "$constrainWidth" ] && [ ! -z "$constrainHeight" ]; then
