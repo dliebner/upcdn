@@ -1500,12 +1500,8 @@ class TranscodingJob {
 		];
 
 		// Optional args
-		if( ($constrainWidth = $this->jobSettings->constrainWidth) && ($constrainHeight = $this->jobSettings->constrainHeight) ) {
-
-			$escapedArgs[] = '-w ' . escapeshellarg($constrainWidth);
-			$escapedArgs[] = '-h ' . escapeshellarg($constrainHeight);
-
-		}
+		if( $constrainWidth = $this->jobSettings->constrainWidth ) $escapedArgs[] = '-w ' . escapeshellarg($constrainWidth);
+		if( $constrainHeight = $this->jobSettings->constrainHeight ) $escapedArgs[] = '-h ' . escapeshellarg($constrainHeight);
 
 		if( $this->jobSettings->saveAsHls ) $escapedArgs[] = "-s";
 		if( $this->jobSettings->passThroughVideo ) $escapedArgs[] = "-p";
