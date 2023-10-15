@@ -791,10 +791,10 @@ class FFProbeResult_Stream {
 
 		switch( $codecType ) {
 
+			// Only return video and audio streams
+			//  (not data streams, for example)
 			case 'video': return new FFProbeResult_VideoStream($json);
 			case 'audio': return new FFProbeResult_AudioStream($json);
-
-			default: throw new Exception("Unknown codec type");
 
 		}
 
