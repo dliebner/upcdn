@@ -1,5 +1,5 @@
-# Allows Apache and dtcdn user to run these scripts as sudo (i.e. as a way to proxy limited commands to docker)
-www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/docker-ffprobe.sh
-www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/docker-ffmpeg.sh
-www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/docker-logs.sh
-www-data, dtcdn ALL=NOPASSWD: /home/dtcdn/scripts/git-pull.sh
+# Allows Apache and upcdn user to run these scripts as sudo (i.e. as a way to proxy limited commands to docker)
+www-data, upcdn ALL=NOPASSWD: /home/upcdn/scripts/docker-ffprobe.sh
+www-data, upcdn ALL=NOPASSWD: /home/upcdn/scripts/docker-ffmpeg.sh
+www-data, upcdn ALL=NOPASSWD: /home/upcdn/scripts/docker-logs.sh
+www-data, upcdn ALL=NOPASSWD: /home/upcdn/scripts/git-pull.sh

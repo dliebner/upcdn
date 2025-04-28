@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '/home/dtcdn/';
+$root_path = '/home/upcdn/';
 
 require($root_path . 'common.php');
 $start = time();

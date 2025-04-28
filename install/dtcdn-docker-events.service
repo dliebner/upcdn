@@ -1,8 +1,8 @@
 [Unit]
-Description=DTCDN Docker Event handler
+Description=UPCDN Docker Event handler
 
 [Service]
-ExecStart=/home/dtcdn/daemon/docker-events.sh
+ExecStart=/home/upcdn/daemon/docker-events.sh
 Restart=on-failure
 
 [Install]

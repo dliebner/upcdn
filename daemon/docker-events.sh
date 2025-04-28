@@ -8,7 +8,7 @@ do
 	container_id=$(echo $event | sed -r -n 's/.* container die ([a-zA-Z0-9]+) .*/\1/p')
 
 	if [ ! -z "$container_id" ]; then
-		sudo -u dtcdn php /home/dtcdn/scripts/docker-container-die.php "$container_id"
+		sudo -u upcdn php /home/upcdn/scripts/docker-container-die.php "$container_id"
 	fi
 
 done

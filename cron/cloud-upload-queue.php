@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '/home/dtcdn/';
+$root_path = '/home/upcdn/';
 
 require($root_path . 'common.php');
 
@@ -64,8 +64,8 @@ while( time() - $maxWaitTime < $start ) {
 				$srcCloudUploads[] = $job;
 
 				$pup->addFileToUpload($file = [
-					'dtcdn:jobId' => $job->id,
-					'dtcdn:type' => 'src',
+					'upcdn:jobId' => $job->id,
+					'upcdn:type' => 'src',
 					'FileName' => $job->getSrcCloudPath(),
 					'LocalFile' => $job->inProgressPath()
 				]);
@@ -91,8 +91,8 @@ while( time() - $maxWaitTime < $start ) {
 				}
 
 				$pup->addFileToUpload($file = [
-					'dtcdn:jobId' => $job->id,
-					'dtcdn:type' => 'version',
+					'upcdn:jobId' => $job->id,
+					'upcdn:type' => 'version',
 					'FileName' => $job->getVersionCloudPath(),
 					'LocalFile' => $localFile
 				]);
@@ -110,8 +110,8 @@ while( time() - $maxWaitTime < $start ) {
 						$posterFrameIndex = $matches[1];
 
 						$pup->addFileToUpload($fileObj = [
-							'dtcdn:jobId' => $job->id,
-							'dtcdn:type' => 'poster',
+							'upcdn:jobId' => $job->id,
+							'upcdn:type' => 'poster',
 							'FileName' => VideoPath::getPosterCloudPath($job->srcFilename, $posterFrameIndex),
 							'LocalFile' => $file->getPathname()
 						]);
@@ -138,8 +138,8 @@ while( time() - $maxWaitTime < $start ) {
 
 			foreach( $uploadedFiles as $uploadedFileResult ) {
 
-				$type = $uploadedFileResult->originalFile['dtcdn:type'];
-				$jobId = $uploadedFileResult->originalFile['dtcdn:jobId'];
+				$type = $uploadedFileResult->originalFile['upcdn:type'];
+				$jobId = $uploadedFileResult->originalFile['upcdn:jobId'];
 
 				if( $type === 'src' ) $finishedSrcCloudUploadJobIds[] = $jobId;
 				if( $type === 'version' ) $finishedCloudUploadJobIds[] = $jobId;
@@ -158,8 +158,8 @@ while( time() - $maxWaitTime < $start ) {
 
 			foreach( $uploadedFiles as $uploadedFileResult ) {
 
-				$type = $uploadedFileResult->originalFile['dtcdn:type'];
-				$jobId = $uploadedFileResult->originalFile['dtcdn:jobId'];
+				$type = $uploadedFileResult->originalFile['upcdn:type'];
+				$jobId = $uploadedFileResult->originalFile['upcdn:jobId'];
 
 				if( $type === 'src' ) $failedSrcCloudUploadJobIds[] = $jobId;
 				if( $type === 'version' ) $failedCloudUploadJobIds[] = $jobId;

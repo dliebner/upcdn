@@ -36,8 +36,8 @@ if [ ! -z "$dir" ]; then
     dirParams+=( -w "$dir" )
 fi
 
-# Change the ownership of the directory to 'dtcdn' user
-chown -R $(id -u dtcdn):$(id -g dtcdn) "$dir"
+# Change the ownership of the directory to 'upcdn' user
+chown -R $(id -u upcdn):$(id -g upcdn) "$dir"
 
 # Run the docker container for ffmpeg command with the collected parameters
 docker run "${dirParams[@]}" -d dliebner/ffmpeg-entrydefault ffmpeg -i "$inFile" -vf "select=eq(n\,$captureFrameIndex)" $scaleCommand -q:v "$jpegQuality" "$outFile"

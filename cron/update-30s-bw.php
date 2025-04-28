@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '/home/dtcdn/';
+$root_path = '/home/upcdn/';
 
 require($root_path . 'common.php');
 
@@ -17,7 +17,7 @@ while( time() - 60 < $start ) {
 
 	start_timer('update30sBw');
 
-	$bytes30s = (int)$redis->get('dtcdn:bw_30sec_exp_' . (time() + 1));
+	$bytes30s = (int)$redis->get('upcdn:bw_30sec_exp_' . (time() + 1));
 
 	ServerStatus::setMulti($updates = [
 		'avg_bytes_per_sec_30s' => round($bytes30s / 30),

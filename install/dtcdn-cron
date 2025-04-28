@@ -1,21 +1,21 @@
 
 # Updates 30s bandwidth from Redis
-* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/update-30s-bw.php
+* * * * * upcdn /usr/bin/php7.4 /home/upcdn/cron/update-30s-bw.php
 
 # Maintains running total of bandwidth
-* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/add-bw-chunk.php
+* * * * * upcdn /usr/bin/php7.4 /home/upcdn/cron/add-bw-chunk.php
 
 # Cloud uploads
-* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/cloud-upload-queue.php
+* * * * * upcdn /usr/bin/php7.4 /home/upcdn/cron/cloud-upload-queue.php
 
 # Second cron
-* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/second.php
+* * * * * upcdn /usr/bin/php7.4 /home/upcdn/cron/second.php
 
 # Minute cron
-* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/minute.php
+* * * * * upcdn /usr/bin/php7.4 /home/upcdn/cron/minute.php
 
 # Figures out what files we need to retrieve
-* * * * * dtcdn /usr/bin/php7.4 /home/dtcdn/cron/handle-404s.php
+* * * * * upcdn /usr/bin/php7.4 /home/upcdn/cron/handle-404s.php
 
 # Prune old stopped docker containers (timestamp is relative to when container was started)
-11 * * * * dtcdn docker container prune --filter "until=48h" -f
+11 * * * * upcdn docker container prune --filter "until=48h" -f

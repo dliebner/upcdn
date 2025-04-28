@@ -2,7 +2,7 @@
 
 define('IN_SCRIPT', 1);
 
-$root_path = '/home/dtcdn/';
+$root_path = '/home/upcdn/';
 
 require($root_path . 'common.php');
 
@@ -21,8 +21,8 @@ while( time() - 60 < $start ) {
 
 	// Redis: Get and delete current 404 uris
 	$ret = $redis->multi()
-		->hGetAll('dtcdn:404_uris')
-		->del('dtcdn:404_uris')
+		->hGetAll('upcdn:404_uris')
+		->del('upcdn:404_uris')
 		->exec();
 
 	if( $ret && ($_404uris = $ret[0]) ) {

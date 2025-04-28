@@ -38,7 +38,7 @@ class CDNClient {
 	public static function gitPull(&$execOutput = null) {
 
 		$cmd = escapeshellcmd(
-			"sudo /home/dtcdn/scripts/git-pull.sh"
+			"sudo /home/upcdn/scripts/git-pull.sh"
 		);
 
 		$execOutput = null;
@@ -743,7 +743,7 @@ class FFProbe {
 		$dir = escapeshellarg(dirname($videoFilePath));
 		$filename = escapeshellarg(basename($videoFilePath));
 		$cmd = escapeshellcmd(
-			"sudo /home/dtcdn/scripts/docker-ffprobe.sh -d $dir -f $filename"
+			"sudo /home/upcdn/scripts/docker-ffprobe.sh -d $dir -f $filename"
 		);
 
 		exec($cmd, $execOutput, $execResult);
@@ -1528,7 +1528,7 @@ class TranscodingJob {
 		}
 
 		$cmd = escapeshellcmd(
-			"sudo /home/dtcdn/scripts/docker-ffmpeg.sh " . implode(" ", $escapedArgs)
+			"sudo /home/upcdn/scripts/docker-ffmpeg.sh " . implode(" ", $escapedArgs)
 		);
 
 		exec($cmd, $execOutput, $execResult);
@@ -2088,7 +2088,7 @@ class TranscodingJob {
 		$containerId = escapeshellarg($this->dockerContainerId);
 
 		$cmd = escapeshellcmd(
-			"sudo /home/dtcdn/scripts/docker-logs.sh -c $containerId -n 70"
+			"sudo /home/upcdn/scripts/docker-logs.sh -c $containerId -n 70"
 		);
 
 		exec($cmd, $execOutput, $execResult);
